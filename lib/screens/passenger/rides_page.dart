@@ -7,7 +7,6 @@ import '../../navbar/navbar_page.dart';
 class MyRidesPage extends StatelessWidget {
   const MyRidesPage({super.key});
 
-  // --- FEATURE: PROFESSIONAL CANCELLATION & REFUND LOGIC ---
   Future<void> _handleCancelRide(BuildContext context, String docId, Map<String, dynamic> data) async {
     final String paymentStatus = data['paymentStatus'] ?? 'unpaid';
     final String paymentMethod = data['paymentMethod'] ?? 'Cash';
