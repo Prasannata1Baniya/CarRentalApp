@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:carrentalapp/data/model/car_model.dart';
 import '../../navbar/navbar_config.dart';
-import '../../navbar/navbar_page.dart';
+import '../../widgets/app_shell.dart';
 
 class BookingConfirmContent extends StatelessWidget {
   final CarModel car;
@@ -74,7 +74,7 @@ class BookingConfirmContent extends StatelessWidget {
                         onPressed: () {
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (context) => const NavigationShell(userRole: UserRole.passenger, initialIndex: 0)),
+                            MaterialPageRoute(builder: (context) => const AppShell(userRole: UserRole.passenger, initialIndex: 0)),
                                 (route) => false,
                           );
                         },
@@ -90,7 +90,7 @@ class BookingConfirmContent extends StatelessWidget {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(builder: (context) =>
-                          const NavigationShell(userRole: UserRole.passenger, initialIndex: 1)),
+                          const AppShell(userRole: UserRole.passenger, initialIndex: 1)),
                               (route) => false,
                         );
                       },

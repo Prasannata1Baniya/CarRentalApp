@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:carrentalapp/auth/auth_provider.dart';
 import '../../navbar/navbar_config.dart';
-import '../../navbar/navbar_page.dart';
+import '../../widgets/app_shell.dart';
 
 class MyRidesPage extends StatelessWidget {
   const MyRidesPage({super.key});
@@ -74,7 +74,7 @@ class MyRidesPage extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
-                builder: (context) => const NavigationShell(
+                builder: (context) => const AppShell(
                   userRole: UserRole.passenger,
                   initialIndex: 0,
                 ),

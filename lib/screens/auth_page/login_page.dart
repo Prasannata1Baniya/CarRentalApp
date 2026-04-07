@@ -5,9 +5,8 @@ import 'package:carrentalapp/auth/auth_provider.dart';
 import 'package:carrentalapp/screens/auth_page/register_page.dart';
 import 'package:carrentalapp/utils/input_decoration.dart';
 import 'package:carrentalapp/utils/text_styles.dart';
-import 'package:carrentalapp/navbar/navbar_page.dart';
-
 import '../../navbar/navbar_config.dart';
+import '../../widgets/app_shell.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -58,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
       // 4. Navigate to NavigationShell with the correct role
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => NavigationShell(userRole: roleEnum),
+          builder: (context) => AppShell(userRole: roleEnum),
         ),
       );
     } else {
