@@ -1,18 +1,18 @@
+import 'package:carrentalapp/screens/owner/active_ride.dart';
+import 'package:carrentalapp/screens/owner/owner_map_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:carrentalapp/auth/auth_provider.dart';
-import 'package:carrentalapp/screens/driver/active_ride.dart';
-import 'driver_map_page.dart';
 
-class DriverHomeContent extends StatelessWidget {
-  const DriverHomeContent({super.key});
+class OwnerHomeContent extends StatelessWidget {
+  const OwnerHomeContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProviderMethod>(context);
-    final driverId = authProvider.user?.uid;
+    final ownerId = authProvider.user?.uid;
 
     return Scaffold(
       appBar: AppBar(
@@ -41,7 +41,7 @@ class DriverHomeContent extends StatelessWidget {
             itemBuilder: (context, index) {
               var doc = snapshot.data!.docs[index];
               var data = doc.data() as Map<String, dynamic>;
-              return _buildRequestCard(context, doc.id, data, driverId!);
+              return _buildRequestCard(context, doc.id, data, ownerId!);
             },
           );
         },
@@ -49,7 +49,7 @@ class DriverHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String driverId) {
+  Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String ownerId) {
     String? carImagePath = data['carImage']?.toString();
 
     return Card(
@@ -103,7 +103,7 @@ class DriverHomeContent extends StatelessWidget {
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => DriverMapPage(
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerMapPage(
                       pickupLocation: LatLng(data['pickupLat'], data['pickupLng']),
                       bookingId: docId,
                     )));
@@ -120,7 +120,7 @@ class DriverHomeContent extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _acceptRide(context, docId, driverId, data),
+                    onPressed: () => _acceptRide(context, docId, ownerId, data),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -146,11 +146,11 @@ class DriverHomeContent extends StatelessWidget {
     );
   }
 
-  Future<void> _acceptRide(BuildContext context, String docId, String driverId, Map<String, dynamic> data) async {
+  Future<void> _acceptRide(BuildContext context, String docId, String ownerId, Map<String, dynamic> data) async {
     try {
       await FirebaseFirestore.instance.collection('bookings').doc(docId).update({
         'status': 'accepted',
-        'driverId': driverId,
+        'ownerId': ownerId,
         'acceptedAt': FieldValue.serverTimestamp(),
       });
 
@@ -205,13 +205,13 @@ import 'package:carrentalapp/auth/auth_provider.dart';
 import 'package:carrentalapp/screens/driver/active_ride.dart';
 import 'driver_map_page.dart';
 
-class DriverHomeContent extends StatelessWidget {
-  const DriverHomeContent({super.key});
+class OwnerHomeContent extends StatelessWidget {
+  const OwnerHomeContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProviderMethod>(context);
-    final driverId = authProvider.user?.uid;
+    final ownerId = authProvider.user?.uid;
 
     return Scaffold(
       appBar: AppBar(
@@ -260,7 +260,7 @@ class DriverHomeContent extends StatelessWidget {
             /*itemBuilder: (context, index) {
               var doc = snapshot.data!.docs[index];
               var data = doc.data() as Map<String, dynamic>;
-              return _buildRequestCard(context, doc.id, data, driverId!);
+              return _buildRequestCard(context, doc.id, data, ownerId!);
             },*/
           );
         },
@@ -268,7 +268,7 @@ class DriverHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String driverId) {
+  Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String ownerId) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 5,
@@ -334,7 +334,7 @@ class DriverHomeContent extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     // Pass 'data' here so the function can send it to the ActiveRidePage
-                    onPressed: () => _acceptRide(context, docId, driverId, data),
+                    onPressed: () => _acceptRide(context, docId, ownerId, data),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
@@ -358,12 +358,12 @@ class DriverHomeContent extends StatelessWidget {
 
   // --- LOGIC: ACCEPT RIDE ---
   // 1. Update the function to accept the 'data' map
-  Future<void> _acceptRide(BuildContext context, String docId, String driverId, Map<String, dynamic> data) async {
+  Future<void> _acceptRide(BuildContext context, String docId, String ownerId, Map<String, dynamic> data) async {
     try {
       // Update Firestore status first
       await FirebaseFirestore.instance.collection('bookings').doc(docId).update({
         'status': 'accepted',
-        'driverId': driverId,
+        'ownerId': ownerId,
         'acceptedAt': FieldValue.serverTimestamp(),
       });
 

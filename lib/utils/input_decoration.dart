@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class InputDecorate {
 
-  InputDecoration buildInputDecoration(String label) {
+  InputDecoration buildInputDecoration(String label, {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
@@ -19,11 +19,11 @@ class InputDecorate {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+        borderSide: const BorderSide(color: Colors.red, width: 3),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+        borderSide: const BorderSide(color: Colors.red, width: 3),
       ),
     );
 

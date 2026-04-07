@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:carrentalapp/auth/auth_provider.dart';
 import '../auth_page/login_page.dart';
 
-class DriverProfileContent extends StatelessWidget {
-  const DriverProfileContent({super.key});
+class OwnerProfileContent extends StatelessWidget {
+  const OwnerProfileContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +121,7 @@ class DriverProfileContent extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Logout"),
-        content: const Text("Are you sure you want to log out of Sajilo Ride?"),
+        content: const Text("Are you sure you want to log out of this app?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

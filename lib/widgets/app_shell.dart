@@ -1,18 +1,17 @@
+import 'package:carrentalapp/screens/owner/active_ride.dart';
+import 'package:carrentalapp/screens/owner/owner_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// --- IMPORTS FOR YOUR SCREENS ---
 import '../navbar/navbar_config.dart';
-import '../screens/driver/driver_home_page.dart';
-import '../screens/passenger/rides_page.dart';
-import '../screens/driver/car_management.dart';
-import '../screens/driver/earning.dart';
-import '../screens/driver/profile.dart';
+import '../screens/owner/car_management.dart';
+import '../screens/owner/earning_page.dart';
+import '../screens/owner/owner_home_content.dart';
 import '../screens/passenger/passenger_home_page.dart';
 import '../screens/passenger/profile.dart';
 import '../screens/passenger/ride_history.dart';
+import '../screens/passenger/rides_page.dart';
 
 class AppShell extends StatefulWidget {
   final UserRole userRole;
@@ -50,10 +49,12 @@ class _AppShellState extends State<AppShell> {
       ];
     } else {
       _destinations = [
-        const NavItem(label: 'Home', icon: Icons.home_outlined, screen: DriverHomeContent()),
+        const NavItem(label: 'Home', icon: Icons.home_outlined, screen: OwnerHomeContent()),
         const NavItem(label: 'Car', icon: Icons.directions_car, screen: CarManagementContent()),
-        const NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: DriversEarningContent()),
-        const NavItem(label: 'Profile', icon: Icons.person_outline, screen: DriverProfileContent()),
+        //const NavItem(label: 'Bookings', icon: Icons.book, screen: ActiveRideContent(
+          //  bookingId: bookingId, bookingData: bookingData))
+        const NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: OwnerEarningContent()),
+        const NavItem(label: 'Profile', icon: Icons.person_outline, screen: OwnerProfileContent()),
       ];
     }
   }
@@ -75,7 +76,7 @@ class _AppShellState extends State<AppShell> {
       if (token != null) {
         String uid = FirebaseAuth.instance.currentUser!.uid;
         // Determine correct collection
-        String collection = widget.userRole == UserRole.driver ? 'drivers' : 'users';
+        String collection = widget.userRole == UserRole.owner ? 'owners' : 'users';
 
         // Save token to Firestore
         await FirebaseFirestore.instance.collection(collection).doc(uid).update({

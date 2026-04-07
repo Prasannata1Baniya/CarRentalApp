@@ -62,11 +62,11 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
     final List<CarModel> previewCars = [
       CarModel(model: "Fortuner GR", distance: 870, pricePerHour: 45,
-          fuelCapacity: 50, image: "assets/images/car1.jpg", driverId: '1'),
+          fuelCapacity: 50, image: "assets/images/car1.jpg", ownerId: '1'),
       CarModel(model: "Tesla Model X", distance: 400, pricePerHour: 55,
-          fuelCapacity: 100, image: "assets/images/car3.jpg", driverId: '2'),
+          fuelCapacity: 100, image: "assets/images/car3.jpg", ownerId: '2'),
       CarModel(model: "Land Cruiser", distance: 500, pricePerHour: 60,
-          fuelCapacity: 80, image: "assets/images/car2.jpg", driverId: '3'),
+          fuelCapacity: 80, image: "assets/images/car2.jpg", ownerId: '3'),
     ];
 
     return Scaffold(

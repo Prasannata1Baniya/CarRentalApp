@@ -18,96 +18,111 @@ class PassengerProfileContent extends StatelessWidget {
       appBar: AppBar(
         title: const Text("My Profile", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.orange,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // 1. USER INFO CARD
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.blueAccent,
-                    child: Icon(Icons.person, size: 50, color: Colors.white),
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    user?.displayName ?? "Passenger Name",
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    user?.email ?? "passenger@example.com",
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 450),
+              child: ClipRRect(
+                borderRadius: BorderRadiusGeometry.circular(25),
+                child: Card(
+                  elevation: 5,
+                  color: Colors.white70,
+                  child: Column(
+                    children: [
+                      // 1. USER INFO CARD
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            const CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.blueAccent,
+                              child: Icon(Icons.person, size: 50, color: Colors.white),
+                            ),
+                            const SizedBox(height: 15),
+                            Text(
+                              user?.displayName ?? "Passenger Name",
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              user?.email ?? "passenger@example.com",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
 
-            const Divider(thickness: 1, indent: 20, endIndent: 20),
+                      const Divider(thickness: 1, indent: 20, endIndent: 20),
 
-            // 2. PASSENGER OPTIONS
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                children: [
-                  _buildProfileTile(
-                    icon: Icons.history,
-                    title: "My Ride History",
-                    subtitle: "View your past trips and receipts",
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_)=>MyRidesPage()));
-                    },
-                  ),
-                  _buildProfileTile(
-                    icon: Icons.payment,
-                    title: "Payment Methods",
-                    subtitle: "Manage your eSewa and Cash options",
-                    onTap: () {},
-                  ),
-                  _buildProfileTile(
-                    icon: Icons.notifications_none,
-                    title: "Notifications",
-                    subtitle: "Manage your alerts and news",
-                    onTap: () {},
-                  ),
-                  _buildProfileTile(
-                    icon: Icons.help_outline,
-                    title: "Help & Support",
-                    subtitle: "Get help with your rides",
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
+                      // 2. PASSENGER OPTIONS
+                      Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Column(
+                          children: [
+                            _buildProfileTile(
+                              icon: Icons.history,
+                              title: "My Ride History",
+                              subtitle: "View your past trips and receipts",
+                              onTap: () {
+                                Navigator.of(context).push(MaterialPageRoute(builder: (_)=>MyRidesPage()));
+                              },
+                            ),
+                            _buildProfileTile(
+                              icon: Icons.payment,
+                              title: "Payment Methods",
+                              subtitle: "Manage your eSewa and Cash options",
+                              onTap: () {},
+                            ),
+                            _buildProfileTile(
+                              icon: Icons.notifications_none,
+                              title: "Notifications",
+                              subtitle: "Manage your alerts and news",
+                              onTap: () {},
+                            ),
+                            _buildProfileTile(
+                              icon: Icons.help_outline,
+                              title: "Help & Support",
+                              subtitle: "Get help with your rides",
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                      ),
 
-            const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-            // 3. LOGOUT BUTTON
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _handleLogout(context, authProvider),
-                  icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text("Logout", style: TextStyle(color: Colors.red)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      // 3. LOGOUT BUTTON
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _handleLogout(context, authProvider),
+                            icon: const Icon(Icons.logout, color: Colors.red),
+                            label: const Text("Logout", style: TextStyle(color: Colors.red)),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.red),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+                      const Text("Sajilo Ride - Passenger v1.0", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    ],
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(height: 30),
-            const Text("Sajilo Ride - Passenger v1.0", style: TextStyle(color: Colors.grey, fontSize: 12)),
-          ],
+          ),
         ),
       ),
     );

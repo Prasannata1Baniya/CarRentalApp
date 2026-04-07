@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:carrentalapp/screens/driver/driver_home_page.dart';
 import 'package:carrentalapp/screens/passenger/rides_page.dart';
-import '../screens/driver/car_management.dart';
-import '../screens/driver/earning.dart';
-import '../screens/driver/profile.dart';
+import '../screens/owner/car_management.dart';
+import '../screens/owner/earning_page.dart';
+import '../screens/owner/owner_home_content.dart';
+import '../screens/owner/owner_profile.dart';
 import '../screens/passenger/passenger_home_page.dart';
 import '../screens/passenger/profile.dart';
 import '../screens/passenger/ride_history.dart';
 
 //To represent user roles.
-enum UserRole { passenger, driver }
+enum UserRole { passenger, owner }
 
 // The model for a navigation item remains the same.
 class NavItem {
@@ -22,7 +22,7 @@ class NavItem {
 
 
 // Navigation items for the Passenger
- List<NavItem> passengerDestinations = [
+List<NavItem> passengerDestinations = [
   const NavItem(label: 'Home', icon: Icons.home, screen: PassengerHomeContent()),
   const NavItem(label: "Booking", icon: Icons.book_online_outlined, screen: MyRidesPage()),
   //const NavItem(label: 'Booking', icon: Icons.book_online_outlined,screen:BookingConfirmContent(car: null,)),
@@ -30,13 +30,13 @@ class NavItem {
   const NavItem(label: 'Profile', icon: Icons.person_outline, screen:PassengerProfileContent()),
 ];
 
-// Navigation items for the Driver
-const List<NavItem> driverDestinations = [
-  NavItem(label: 'Home', icon: Icons.home_outlined, screen: DriverHomeContent()),
+// Navigation items for the Owner
+const List<NavItem> ownerDestinations = [
+  NavItem(label: 'Home', icon: Icons.home_outlined, screen: OwnerHomeContent()),
   NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: CarManagementContent()),
   //NavItem(label: 'Booking', icon: Icons.book_online_outlined, screen: ActiveRideContent()),
-  NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: DriversEarningContent()),
-  NavItem(label: 'Profile', icon: Icons.person_outline, screen: DriverProfileContent()),
+  NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: OwnerEarningContent()),
+  NavItem(label: 'Profile', icon: Icons.person_outline, screen: OwnerProfileContent()),
 ];
 
 // A helper function to get the correct list based on the role.
@@ -44,7 +44,7 @@ List<NavItem> getDestinationsForRole(UserRole role) {
   switch (role) {
     case UserRole.passenger:
       return passengerDestinations;
-    case UserRole.driver:
-      return driverDestinations;
+    case UserRole.owner:
+      return ownerDestinations;
   }
 }

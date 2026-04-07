@@ -18,8 +18,8 @@ class RideHistoryContent extends StatelessWidget {
         title: const Text("Ride History"),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
       ),
       // 2. Use StreamBuilder to get real-time history updates
       body: StreamBuilder<QuerySnapshot>(
@@ -87,7 +87,7 @@ class RideHistoryContent extends StatelessWidget {
             Text(formattedDate, style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 4),
             Text(
-              isCancelled ? "Ride Cancelled" : "Ride Completed",
+              isCancelled ? "Rent Cancelled" : "Rent Completed",
               style: TextStyle(
                 color: isCancelled ? Colors.red : Colors.green,
                 fontWeight: FontWeight.w500,

@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-class DriverMapPage extends StatelessWidget {
+class OwnerMapPage extends StatelessWidget {
   final LatLng pickupLocation;
   final String bookingId;
 
-  const DriverMapPage({
+  const OwnerMapPage({
     super.key,
     required this.pickupLocation,
     required this.bookingId,

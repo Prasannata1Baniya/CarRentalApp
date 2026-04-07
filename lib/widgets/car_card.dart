@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart'; // Ensure you have this import
+import 'package:latlong2/latlong.dart';
 import 'package:carrentalapp/data/model/car_model.dart';
 import 'package:carrentalapp/utils/text_styles.dart';
 import '../screens/passenger/car_detail_page.dart';

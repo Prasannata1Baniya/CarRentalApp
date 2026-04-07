@@ -7,6 +7,8 @@ import 'package:carrentalapp/utils/input_decoration.dart';
 import 'package:carrentalapp/utils/text_styles.dart';
 import 'package:carrentalapp/navbar/navbar_page.dart';
 
+import '../../navbar/navbar_config.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -49,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
       String roleString = await authProvider.getUserRole(authProvider.user!.uid);
 
       // 3. Convert to Enum
-      UserRole roleEnum = (roleString == 'Driver') ? UserRole.driver : UserRole.passenger;
+      UserRole roleEnum = (roleString == 'owner') ? UserRole.owner : UserRole.passenger;
 
       if (!mounted) return;
 
@@ -95,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(25),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                filter: ImageFilter.blur(sigmaX: 200, sigmaY: 200),
                 child: Container(
                   padding: const EdgeInsets.all(32.0),
                   decoration: BoxDecoration(

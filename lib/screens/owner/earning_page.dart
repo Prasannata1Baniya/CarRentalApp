@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carrentalapp/auth/auth_provider.dart';
 
-class DriversEarningContent extends StatelessWidget {
-  const DriversEarningContent({super.key});
+class OwnerEarningContent extends StatelessWidget {
+  const OwnerEarningContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProviderMethod>(context);
-    final driverId = authProvider.user?.uid;
+    final ownerId = authProvider.user?.uid;
 
     return Scaffold(
       appBar: AppBar(
@@ -21,7 +21,7 @@ class DriversEarningContent extends StatelessWidget {
         // Only show rides that are 'completed' and belong to THIS driver
         stream: FirebaseFirestore.instance
             .collection('bookings')
-            .where('driverId', isEqualTo: driverId)
+            .where('driverId', isEqualTo: ownerId)
             .where('status', isEqualTo: 'completed')
             .snapshots(),
         builder: (context, snapshot) {

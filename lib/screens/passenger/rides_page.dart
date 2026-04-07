@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:carrentalapp/auth/auth_provider.dart';
+import '../../navbar/navbar_config.dart';
 import '../../navbar/navbar_page.dart';
 
 class MyRidesPage extends StatelessWidget {
@@ -65,7 +66,8 @@ class MyRidesPage extends StatelessWidget {
         title: const Text("My Active Rides",
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.orange),
@@ -133,7 +135,7 @@ class MyRidesPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: Column(
           children: [
-            // 1. TOP SECTION (Driver Info / Car Info)
+            // 1. TOP SECTION (Car Info)
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Row(
@@ -186,7 +188,7 @@ class MyRidesPage extends StatelessWidget {
                   if (status == 'pending') ...[
                     const LinearProgressIndicator(color: Colors.orange, backgroundColor: Color(0xFFEEEEEE)),
                     const SizedBox(height: 12),
-                    const Text("Looking for nearest drivers...", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54)),
+                    const Text("Looking...", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black54)),
                   ],
 
                   if (status == 'ongoing') ...[

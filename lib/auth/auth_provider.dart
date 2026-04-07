@@ -48,7 +48,7 @@ class AuthProviderMethod extends ChangeNotifier {
       await firebaseUser!.updateDisplayName(name);
 
       String dummyLicenseUrl = "";
-      if (role == 'Driver') {
+      if (role == 'owner'){
         dummyLicenseUrl = "https://cdn-icons-png.flaticon.com/512/3524/3524752.png";
       }
 
@@ -70,5 +70,7 @@ class AuthProviderMethod extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _auth.signOut();
+    user=null;
+    notifyListeners();
   }
 }

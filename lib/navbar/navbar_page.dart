@@ -1,14 +1,13 @@
+import 'package:carrentalapp/navbar/navbar_config.dart';
 import 'package:flutter/material.dart';
-import 'package:carrentalapp/screens/driver/driver_home_page.dart';
 import 'package:carrentalapp/screens/passenger/rides_page.dart';
-import '../screens/driver/car_management.dart';
-import '../screens/driver/earning.dart';
-import '../screens/driver/profile.dart';
+import '../screens/owner/car_management.dart';
+import '../screens/owner/earning_page.dart';
+import '../screens/owner/owner_home_content.dart';
+import '../screens/owner/owner_profile.dart';
 import '../screens/passenger/passenger_home_page.dart';
 import '../screens/passenger/profile.dart';
 import '../screens/passenger/ride_history.dart';
-
-enum UserRole { passenger, driver }
 
 class NavItem {
   final String label;
@@ -51,18 +50,18 @@ class _NavigationShellState extends State<NavigationShell> {
   ];
 
   //Driver Menu
-  final List<NavItem> _driverDestinations = [
-    const NavItem(label: 'Home', icon: Icons.home_outlined, screen: DriverHomeContent()),
+  final List<NavItem> _ownerDestinations = [
+    const NavItem(label: 'Home', icon: Icons.home_outlined, screen: OwnerHomeContent()),
     const NavItem(label: 'Car', icon: Icons.directions_car, screen: CarManagementContent()),
-    const NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: DriversEarningContent()),
-    const NavItem(label: 'Profile', icon: Icons.person_outline, screen: DriverProfileContent()),
+    const NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: OwnerEarningContent()),
+    const NavItem(label: 'Profile', icon: Icons.person_outline, screen: OwnerProfileContent()),
   ];
 
   @override
   Widget build(BuildContext context) {
     // Select the correct list based on user role
     final List<NavItem> activeDestinations =
-    widget.userRole == UserRole.driver ? _driverDestinations : _passengerDestinations;
+    widget.userRole == UserRole.owner ? _ownerDestinations : _passengerDestinations;
 
     final bool isWide = MediaQuery.of(context).size.width > 600;
 
@@ -72,6 +71,7 @@ class _NavigationShellState extends State<NavigationShell> {
           // Sidebar for Web/Tablet
           if (isWide)
             NavigationRail(
+              backgroundColor: Colors.black,
               selectedIndex: _currentIndex,
               onDestinationSelected: (i) => setState(() => _currentIndex = i),
               labelType: NavigationRailLabelType.all,
@@ -81,8 +81,8 @@ class _NavigationShellState extends State<NavigationShell> {
               ),
               destinations: activeDestinations.map((item) {
                 return NavigationRailDestination(
-                  icon: Icon(item.icon),
-                  label: Text(item.label),
+                  icon: Icon(item.icon,color: Colors.white,),
+                  label: Text(item.label,selectionColor: Colors.white,),
                 );
               }).toList(),
             ),
@@ -98,18 +98,19 @@ class _NavigationShellState extends State<NavigationShell> {
       bottomNavigationBar: isWide
           ? null
           : BottomNavigationBar(
+        backgroundColor: Colors.black,
+
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: widget.userRole == UserRole.driver ? Colors.orange : Colors.blue,
+        selectedItemColor: widget.userRole == UserRole.owner ? Colors.orange : Colors.blue,
         items: activeDestinations.map((item) {
           return BottomNavigationBarItem(
-            icon: Icon(item.icon),
-            label: item.label,
+            icon: Icon(item.icon,color: Colors.white,),
+            label: item.label,backgroundColor: Colors.white
           );
         }).toList(),
       ),
     );
   }
 }
-

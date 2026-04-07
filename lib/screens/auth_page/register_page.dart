@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl_phone_field/country_picker_dialog.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
 import 'package:carrentalapp/auth/auth_provider.dart';
 import 'package:carrentalapp/utils/input_decoration.dart';
@@ -21,8 +23,13 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  final _numController =TextEditingController();
 
-  final List<String> roles = ['Passenger', 'Driver'];
+  String _phoneNumber='';
+   FocusNode focusNode = FocusNode();
+
+
+  final List<String> roles = ['passenger', 'owner'];
   String? selectedRole;
   String? error;
   bool _isLoading = false;
@@ -30,12 +37,15 @@ class _RegisterPageState extends State<RegisterPage> {
   Uint8List? _imageData;
 
   final InputDecorate inputDecorate = InputDecorate();
+  bool _isPasswordObscured = true;
+
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
+    _phoneNumber;
     super.dispose();
   }
 
@@ -63,8 +73,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    // Check for image if driver
-    if (selectedRole == 'Driver' && _imageData == null) {
+    // Check for image if passenger
+    if (selectedRole == 'passenger' && _imageData == null) {
       setState(() => error = "Please upload your Driver's License first");
       return;
     }
@@ -135,7 +145,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(25),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                        filter: ImageFilter.blur(sigmaX: 200, sigmaY: 200),
                         child: Container(
                           width: MediaQuery.of(context).size.width * 0.85,
                           padding: const EdgeInsets.all(24.0),
@@ -156,7 +166,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   controller: _nameController,
                                   style: const TextStyle(color: Colors.black,
                                       fontWeight: FontWeight.bold),
-                                  decoration: inputDecorate.buildInputDecoration("Full Name"),
+                                  decoration: inputDecorate.buildInputDecoration("Full Name",
+                                  suffixIcon: Icon(Icons.person),
+                                  ),
                                   validator: (value) => value == null || value.isEmpty ? "Required" : null,
                                 ),
                                 const SizedBox(height: 16),
@@ -164,21 +176,71 @@ class _RegisterPageState extends State<RegisterPage> {
                                 TextFormField(
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
-                                  style: const TextStyle(color: Colors.black,
+                                  style: const TextStyle(color: Colors.white70,
                                       fontWeight: FontWeight.bold),
-                                  decoration: inputDecorate.buildInputDecoration("Email"),
-                                  validator: (value) => (value == null || !value.contains('@')) ? "Invalid email" : null,
+                                  decoration: inputDecorate.buildInputDecoration("Email").copyWith(
+                                    labelStyle: const TextStyle(color: Colors.white70),
+                                    suffixIcon: Icon(Icons.email, color: Colors.white70,),
+                                  ),
+                                  validator: (value) => (value == null || !value.contains('@'))
+                                      ? "Invalid email" : null,
                                 ),
                                 const SizedBox(height: 16),
 
                                 TextFormField(
                                   controller: _passwordController,
-                                  obscureText: true,
-                                  style: const TextStyle(color: Colors.black,
-                                      fontWeight: FontWeight.bold),
-                                  decoration: inputDecorate.buildInputDecoration("Password"),
-                                  validator: (value) => (value == null || value.length < 6) ? "Min 6 characters" : null,
+                                  validator: (value) =>
+                                  (value == null || value.length < 6)
+                                      ? 'Short password'
+                                      : null,
+                                  style: const TextStyle(color: Colors.white),
+                                  obscureText: _isPasswordObscured,
+                                  decoration: inputDecorate.buildInputDecoration("Password").copyWith(
+                                    labelStyle: const TextStyle(color: Colors.white70),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                        color: Colors.white70,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isPasswordObscured = !_isPasswordObscured;
+                                        });
+                                      },
+                                    ),
+                                  ),
                                 ),
+                                const SizedBox(height: 16),
+
+                                //Number
+                                IntlPhoneField(
+                                  validator: (value)=>(value==null ||
+                                      value.number.length<10)
+                                      ? 'Enter 10 digit number'
+                                      : null,
+                                  controller: _numController,
+                                  style: const TextStyle(color: Colors.white),
+                                  dropdownTextStyle: const TextStyle(color: Colors.white),
+                                  cursorColor: Colors.orangeAccent,
+                                  decoration: inputDecorate.buildInputDecoration("Phone Number").copyWith(
+                                    counterStyle: const TextStyle(color: Colors.white60),
+                                  ),
+                                  initialCountryCode: 'NP',
+                                  onChanged: (phone) {
+                                    _phoneNumber = phone.completeNumber;
+                                  },
+
+                                  pickerDialogStyle: PickerDialogStyle(
+                                    backgroundColor: Colors.grey[900],
+                                    countryCodeStyle: const TextStyle(color: Colors.white),
+                                    countryNameStyle: const TextStyle(color: Colors.white),
+                                    searchFieldInputDecoration: InputDecoration(
+                                      labelText: 'Search Country',
+                                      labelStyle: const TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+
                                 const SizedBox(height: 16),
 
                                 DropdownButtonFormField<String>(
@@ -196,11 +258,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
 
                                 // --- DRIVER LICENSE UI ---
-                                if (selectedRole == 'Driver') ...[
+                                if (selectedRole == 'passenger') ...[
                                   const SizedBox(height: 20),
                                   const Align(
                                     alignment: Alignment.centerLeft,
-                                    child: Text(" License Document", style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                    child: Text(" License Document",
+                                        style: TextStyle(color: Colors.white70, fontSize: 13)),
                                   ),
                                   const SizedBox(height: 8),
                                   GestureDetector(

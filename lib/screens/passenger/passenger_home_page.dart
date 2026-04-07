@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:carrentalapp/auth/auth_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -6,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:carrentalapp/data/model/car_model.dart';
 import 'package:carrentalapp/widgets/car_card.dart';
-//import 'package:geocoding/geocoding.dart';
+import 'package:provider/provider.dart';
 
 class PassengerHomeContent extends StatefulWidget {
   const PassengerHomeContent({super.key});
@@ -23,17 +24,17 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
   final List<CarModel> carList = [
     CarModel(model: "Fortuner GR",
         distance: 870, pricePerHour: 45, fuelCapacity: 50,
-        image: "assets/images/car1.jpg",driverId: ''),
+        image: "assets/images/car1.jpg",ownerId: ''),
     CarModel(model: "Land Cruiser", distance: 500, pricePerHour: 60,
-        fuelCapacity: 80, image: "assets/images/car2.jpg", driverId: ''),
+        fuelCapacity: 80, image: "assets/images/car2.jpg", ownerId: ''),
     CarModel(model: "Tesla Model X", distance: 400, pricePerHour: 55,
-        fuelCapacity: 100, image: "assets/images/car3.jpg", driverId: ''),
+        fuelCapacity: 100, image: "assets/images/car3.jpg", ownerId: ''),
     CarModel(model: "Hyundai Tucson", distance: 600, pricePerHour: 35,
-        fuelCapacity: 55, image: "assets/images/car4.jpg", driverId: ''),
+        fuelCapacity: 55, image: "assets/images/car4.jpg", ownerId: ''),
     CarModel(model: "Kia Sportage", distance: 700, pricePerHour: 38,
-        fuelCapacity: 60, image: "assets/images/car2.jpg", driverId: ''),
+        fuelCapacity: 60, image: "assets/images/car2.jpg", ownerId: ''),
     CarModel(model: "Suzuki Vitara", distance: 900, pricePerHour: 30,
-        fuelCapacity: 45, image: "assets/images/car3.jpg", driverId: ''),
+        fuelCapacity: 45, image: "assets/images/car3.jpg", ownerId: ''),
   ];
 
   String _address = "Fetching address...";
@@ -91,6 +92,58 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
     }
   }*/
 
+  void _handleLogout(BuildContext context, AuthProviderMethod auth) {
+    showDialog(
+      context: context,
+      builder: (context) =>
+          AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20)),
+            backgroundColor: Colors.white,
+            title: const Column(
+              children: [
+                Icon(Icons.logout_rounded, color: Colors.redAccent, size: 40),
+                SizedBox(height: 10),
+                Text("Sign Out", style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 22)),
+              ],
+            ),
+            content: const Text(
+              "Are you sure you want to log out of Sajilo Ride?",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black54),
+            ),
+            actionsAlignment: MainAxisAlignment.spaceEvenly,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("CANCEL", style: TextStyle(
+                    color: Colors.grey, fontWeight: FontWeight.bold)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 25, vertical: 12),
+                ),
+                onPressed: () async {
+                  await auth.signOut();
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text(
+                    "LOGOUT", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -102,16 +155,39 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
   @override
   Widget build(BuildContext context) {
     bool isWideScreen = MediaQuery.of(context).size.width > 900;
+    final authProvider = Provider.of<AuthProviderMethod>(context);
+    final AuthProviderMethod auth =AuthProviderMethod();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Sajilo Ride - Choose Pickup"),
+        title: const Text("Car Rental App - Choose Pickup"),
         backgroundColor: Colors.orangeAccent,
         foregroundColor: Colors.white,
         elevation: 1,
+        actions: [
+          IconButton(
+            onPressed: () async{
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Logout"),
+                  content: const Text("Are you sure you want to exit?"),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                    TextButton(
+                      onPressed: () => _handleLogout(context, authProvider),
+                      child: const Text("Logout", style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('drivers').snapshots(),
+        stream: FirebaseFirestore.instance.collection('Owner').snapshots(),
         builder: (context, snapshot) {
           // While loading, show the hardcoded list so it's not blank
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -124,7 +200,7 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
             liveCarList = snapshot.data!.docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
               return CarModel(
-                driverId: doc.id,
+                ownerId: doc.id,
                 model: data['carModel'] ?? 'Unknown',
                 pricePerHour: (data['pricePerHour'] ?? 0).toDouble(),
                 distance: (data['distance'] ?? 0).toDouble(),

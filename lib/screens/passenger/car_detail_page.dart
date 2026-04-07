@@ -99,8 +99,8 @@ class _CarDetailPageState extends State<CarDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.car.model),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -691,7 +691,7 @@ class _CarDetailPageState extends State<CarDetailPage> {
         'passengerId': userId,
         'carModel': widget.car.model,
         'price': widget.car.pricePerHour,
-        'status': 'pending', // Pending driver approval
+        'status': 'pending', // Pending owner approval
         'paymentMethod': method,
         'paymentStatus': paymentStatus,
         'timestamp': FieldValue.serverTimestamp(),

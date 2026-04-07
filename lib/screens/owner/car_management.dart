@@ -86,7 +86,7 @@ class _CarManagementContentState extends State<CarManagementContent> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProviderMethod>(context);
-    final driverId = authProvider.user?.uid;
+    final ownerId = authProvider.user?.uid;
 
     return Scaffold(
       appBar: AppBar(
@@ -98,7 +98,7 @@ class _CarManagementContentState extends State<CarManagementContent> {
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('drivers')
-            .doc(driverId)
+            .doc(ownerId)
             .snapshots(),
         builder: (context, snapshot) {
 
@@ -228,7 +228,7 @@ class _CarManagementContentState extends State<CarManagementContent> {
                         ),
                         onPressed: _isLoading
                             ? null
-                            : () => _saveCarDetails(driverId!),
+                            : () => _saveCarDetails(ownerId!),
                         child: _isLoading
                             ? const CircularProgressIndicator(color: Colors.white)
                             : const Text(
@@ -305,7 +305,7 @@ class _CarManagementContentState extends State<CarManagementContent> {
     }
   }
 
-  Future<void> _saveCarDetails(String driverId) async {
+  Future<void> _saveCarDetails(String ownerId) async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -322,7 +322,7 @@ class _CarManagementContentState extends State<CarManagementContent> {
 
       await FirebaseFirestore.instance
           .collection('drivers')
-          .doc(driverId)
+          .doc(ownerId)
           .set({
         'carModel': _modelController.text,
         'plateNumber': _plateController.text,
