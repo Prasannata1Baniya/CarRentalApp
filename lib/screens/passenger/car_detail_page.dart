@@ -1,3 +1,4 @@
+import 'package:carrentalapp/core/constant/payment_config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -22,9 +23,23 @@ class CarDetailPage extends StatefulWidget {
 }
 
 class _CarDetailPageState extends State<CarDetailPage> {
+  DateTime? pickupDate;
+  DateTime? returnDate;
+  double totalAmount = 0.0;
   String selectedPayment = "Cash";
-  static const String clientId = "JB0BBQ4aD0UqIThFJwAKBgAXEUkEGQUBBAwdOgABHD4DChwUAB0R";
-  static const String secretKey= "BhwIWQQADhIYSxILExMcAgFXFhcOBwAKBgAXEQ==";
+
+
+  // --- Function to calculate total ---
+  void _calculateTotal() {
+    if (pickupDate != null && returnDate != null) {
+      final duration = returnDate!.difference(pickupDate!);
+      final hours = duration.inHours;
+      setState(() {
+        // Ensure at least 1 hour is charged if same day is selected
+        totalAmount = (hours > 0 ? hours : 1) * widget.car.pricePerHour.toDouble();
+      });
+    }
+  }
 
   // --- ESEWA SDK PAYMENT METHOD ---
   void _processEsewaSDKPayment() {
@@ -32,13 +47,13 @@ class _CarDetailPageState extends State<CarDetailPage> {
       EsewaFlutterSdk.initPayment(
         esewaConfig: EsewaConfig(
           environment: Environment.test,
-          clientId: clientId,
-          secretId: secretKey,
+          clientId: PaymentConfig.clientId,
+          secretId: PaymentConfig.secretKey,
         ),
         esewaPayment: EsewaPayment(
           productId: "ride_${DateTime.now().millisecondsSinceEpoch}",
           productName: widget.car.model,
-          productPrice: widget.car.pricePerHour.toString(),
+          productPrice: totalAmount.toString(), // Updated to use totalAmount
           callbackUrl: '',
         ),
         onPaymentSuccess: (EsewaPaymentSuccessResult data) {
@@ -73,7 +88,9 @@ class _CarDetailPageState extends State<CarDetailPage> {
       await FirebaseFirestore.instance.collection('bookings').add({
         'passengerId': userId,
         'carModel': widget.car.model,
-        'price': widget.car.pricePerHour,
+        'totalPrice': totalAmount,
+        'pickupDate': pickupDate,
+        'returnDate': returnDate,
         'status': 'pending',
         'paymentMethod': method,
         'paymentStatus': paymentStatus,
@@ -84,9 +101,9 @@ class _CarDetailPageState extends State<CarDetailPage> {
       });
 
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.pop(context); // Close loading dialog
 
-      Navigator.push(context, MaterialPageRoute(builder: (context) => BookingConfirmContent(car: widget.car)));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingConfirmContent(car: widget.car)));
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
@@ -107,11 +124,13 @@ class _CarDetailPageState extends State<CarDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- CAR IMAGE ---
             widget.car.image.startsWith('http')
                 ? Image.network(
               widget.car.image,
               height: 250,
-              width: double.infinity,fit: BoxFit.cover,
+              width: double.infinity,
+              fit: BoxFit.cover,
             )
                 : Image.asset(
               widget.car.image,
@@ -119,12 +138,12 @@ class _CarDetailPageState extends State<CarDetailPage> {
               width: double.infinity,
               fit: BoxFit.cover,
             ),
-            //Image.asset(widget.car.image, height: 250, width: double.infinity, fit: BoxFit.cover),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- TITLE & PRICE ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -132,7 +151,13 @@ class _CarDetailPageState extends State<CarDetailPage> {
                       Text('\$${widget.car.pricePerHour}/hr', style: const TextStyle(fontSize: 22, color: Colors.green, fontWeight: FontWeight.bold)),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
+
+                  // --- DATE SELECTION ---
+                  _buildDateSection(),
+                  const SizedBox(height: 24),
+
+                  // --- MAP SECTION ---
                   const Text('Pickup Point', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   Container(
@@ -158,6 +183,8 @@ class _CarDetailPageState extends State<CarDetailPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // --- PAYMENT OPTIONS ---
                   const Text('Select Payment Method', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Row(
@@ -167,412 +194,27 @@ class _CarDetailPageState extends State<CarDetailPage> {
                       _paymentOption("eSewa", Icons.account_balance_wallet),
                     ],
                   ),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SizedBox(
-          width: double.infinity, height: 55,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: selectedPayment == "eSewa" ? Colors.green : Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              if (selectedPayment == "eSewa") {
-                _processEsewaSDKPayment(); // Calls SDK
-              } else {
-                _saveBookingToFirestore(paymentStatus: "unpaid", method: "Cash");
-              }
-            },
-            child: Text(
-              selectedPayment == "eSewa" ? "Pay via eSewa SDK" : "Confirm Booking (Cash)",
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+                  const SizedBox(height: 24),
 
-  Widget _paymentOption(String title, IconData icon) {
-    bool isSelected = selectedPayment == title;
-    return GestureDetector(
-      onTap: () => setState(() => selectedPayment = title),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? (title == "eSewa" ? Colors.green : Colors.orange) : Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.black54),
-            const SizedBox(width: 8),
-            Text(title, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-/*import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart'; // Added for eSewa
-import 'package:carrentalapp/data/model/car_model.dart';
-import 'package:carrentalapp/screens/passenger/booking_confirm.dart';
-import '../../auth/auth_provider.dart';
-
-class CarDetailPage extends StatefulWidget {
-  final CarModel car;
-  final LatLng pickupLocation;
-
-  const CarDetailPage({super.key, required this.car, required this.pickupLocation});
-
-  @override
-  State<CarDetailPage> createState() => _CarDetailPageState();
-}
-
-class _CarDetailPageState extends State<CarDetailPage> {
-  String selectedPayment = "Cash";
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.car.model),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Car Image
-            Image.asset(widget.car.image, height: 250, width: double.infinity, fit: BoxFit.cover),
-
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(widget.car.model, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                      Text('\$${widget.car.pricePerHour}/hr', style: const TextStyle(fontSize: 22, color: Colors.green, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 2. Map Section (Preserved as requested)
-                  const Text('Pickup Point', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  Container(
-                    height: 180,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey.shade300)
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: widget.pickupLocation,
-                          initialZoom: 15.0,
-                        ),
+                  // --- TOTAL ESTIMATE DISPLAY ---
+                  if (totalAmount > 0)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          TileLayer(
-                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.prasannata.carrentalapp',
-                          ),
-                          MarkerLayer(markers: [
-                            Marker(
-                                point: widget.pickupLocation,
-                                child: const Icon(Icons.location_on, color: Colors.red, size: 35)
-                            ),
-                          ]),
+                          const Text("Total Estimate", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          Text("\$${totalAmount.toStringAsFixed(2)}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange)),
                         ],
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
-                  const Text('Select Payment Method', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _paymentOption("Cash", Icons.money),
-                      const SizedBox(width: 12),
-                      _paymentOption("eSewa", Icons.account_balance_wallet),
-                    ],
-                  ),
-                  const SizedBox(height: 100), // Space for floating button
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SizedBox(
-          width: double.infinity,
-          height: 55,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: selectedPayment == "eSewa" ? Colors.green : Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              if (selectedPayment == "eSewa") {
-                _processEsewaPayment();
-              } else {
-                _saveBookingToFirestore(paymentStatus: "unpaid", method: "Cash");
-              }
-            },
-            child: Text(
-              selectedPayment == "eSewa" ? "Pay via eSewa" : "Confirm Booking (Cash)",
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- ESEWA PAYMENT FLOW (Optimized for Mobile Demo) ---
-  Future<void> _processEsewaPayment() async {
-    // --- ESEWA PAYMENT FLOW
-    // 1. Show Connecting Dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Colors.green),
-            const SizedBox(height: 20),
-            Image.network('https://esp.com.np/wp-content/uploads/2023/02/esewa-logo.png', height: 40),
-            const SizedBox(height: 10),
-            const Text("Connecting to eSewa...", style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-
-    // 2. Prepare eSewa UAT URL
-    final String amount = widget.car.pricePerHour.toString();
-    final String productId = "Ride_${DateTime.now().millisecondsSinceEpoch}";
-
-    final Uri url = Uri.parse(
-        "https://uat.esewa.com.np/epay/main"
-            "?amt=$amount"
-            "&pdc=0"
-            "&psc=0"
-            "&txAmt=0"
-            "&tAmt=$amount"
-            "&pid=$productId"
-            "&scd=EPAYTEST"
-            "&su=https://google.com"
-            "&fu=https://google.com"
-    );
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    // GUARD: Check if the user is still on this screen before closing dialog
-    if (!mounted) return;
-    Navigator.pop(context); // Close dialog
-
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-
-        // GUARD: Check again before proceeding to Firestore
-        if (!mounted) return;
-        _saveBookingToFirestore(paymentStatus: "paid", method: "eSewa");
-      } else {
-        // GUARD: Check before showing SnackBar
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not launch eSewa portal")),
-        );
-      }
-    } catch (e) {
-      // GUARD: Check before showing Error SnackBar
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-    }
-  }
-
-  // --- SAVE DATA TO FIRESTORE ---
-  Future<void> _saveBookingToFirestore({required String paymentStatus, required String method}) async {
-    final authProvider = Provider.of<AuthProviderMethod>(context, listen: false);
-    final userId = authProvider.user?.uid;
-    if (userId == null) return;
-
-    // Show small saving indicator
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator())
-    );
-
-    try {
-      await FirebaseFirestore.instance.collection('bookings').add({
-        'passengerId': userId,
-        'carModel': widget.car.model,
-        'price': widget.car.pricePerHour,
-        'status': 'pending',
-        'paymentMethod': method,
-        'paymentStatus': paymentStatus,
-        'timestamp': FieldValue.serverTimestamp(),
-        'pickupLat': widget.pickupLocation.latitude,
-        'pickupLng': widget.pickupLocation.longitude,
-        'carImage': widget.car.image,
-      });
-
-      if (!mounted) return;
-      Navigator.pop(context); // Close saving indicator
-
-      // Navigate to Final Success Screen
-      Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => BookingConfirmContent(car: widget.car))
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-    }
-  }
-
-  Widget _paymentOption(String title, IconData icon) {
-    bool isSelected = selectedPayment == title;
-    return GestureDetector(
-      onTap: () => setState(() => selectedPayment = title),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? (title == "eSewa" ? Colors.green : Colors.orange) : Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.black54),
-            const SizedBox(width: 8),
-            Text(title, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-*/
-
-/*import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
-import 'package:carrentalapp/data/model/car_model.dart';
-import 'package:carrentalapp/screens/passenger/booking_confirm.dart';
-import '../../auth/auth_provider.dart';
-
-class CarDetailPage extends StatefulWidget {
-  final CarModel car;
-  final LatLng pickupLocation;
-
-  const CarDetailPage({super.key, required this.car, required this.pickupLocation});
-
-  @override
-  State<CarDetailPage> createState() => _CarDetailPageState();
-}
-
-class _CarDetailPageState extends State<CarDetailPage> {
-  String selectedPayment = "Cash";
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.car.model),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Image
-            Image.asset(widget.car.image, height: 250, width: double.infinity, fit: BoxFit.cover),
-
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(widget.car.model, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                      Text('\$${widget.car.pricePerHour}/hr', style: const TextStyle(fontSize: 22, color: Colors.green, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 2. Map Section
-                  const Text('Pickup Point', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  Container(
-                    height: 180,
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade300)),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: widget.pickupLocation,
-                          initialZoom: 15.0,
-                        ),
-                        children: [
-                          TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.prasannata.carrentalapp',),
-                          MarkerLayer(markers: [
-                            Marker(point: widget.pickupLocation, child: const Icon(Icons.location_on, color: Colors.red, size: 35)),
-                          ]),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  const Text('Select Payment Method', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _paymentOption("Cash", Icons.money),
-                      const SizedBox(width: 12),
-                      _paymentOption("eSewa", Icons.account_balance_wallet),
-                    ],
-                  ),
+                  // Bottom padding to ensure scroll clears the floating button
                   const SizedBox(height: 100),
                 ],
               ),
@@ -592,14 +234,25 @@ class _CarDetailPageState extends State<CarDetailPage> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
+              // VALIDATION: Ensure dates are selected
+              if (pickupDate == null || returnDate == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Please select both Pickup and Return dates"),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
               if (selectedPayment == "eSewa") {
-                _processEsewaPayment();
+                _processEsewaSDKPayment();
               } else {
                 _saveBookingToFirestore(paymentStatus: "unpaid", method: "Cash");
               }
             },
             child: Text(
-              selectedPayment == "eSewa" ? "Pay via eSewa" : "Confirm Booking (Cash)",
+              selectedPayment == "eSewa" ? "Pay \$${totalAmount > 0 ? totalAmount.toStringAsFixed(0) : widget.car.pricePerHour} via eSewa" : "Confirm Booking (Cash)",
               style: const TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
@@ -608,354 +261,100 @@ class _CarDetailPageState extends State<CarDetailPage> {
     );
   }
 
-  // --- ESEWA PAYMENT FLOW (Real Data Flow) ---
-  void _processEsewaPayment() {
-    // 1. Show a professional "Connecting to eSewa" overlay
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: Colors.green),
-            const SizedBox(height: 20),
-            Image.network('https://esp.com.np/wp-content/uploads/2023/02/esewa-logo.png', height: 40),
-            const SizedBox(height: 10),
-            const Text("Connecting to eSewa...", style: TextStyle(fontWeight: FontWeight.bold)),
-            const Text("Please do not close the app", style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-
-    // 2. Wait 2 seconds (Simulating the API call)
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      Navigator.pop(context); // Close the loading dialog
-
-      // 3. Directly trigger the SUCCESS flow and save "Paid" to Firestore
-      _saveBookingToFirestore(paymentStatus: "paid", method: "eSewa");
-    });
-  }
-
- /* void _processEsewaPayment() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const Text("eSewa Payment Portal", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green)),
-            const Divider(),
-            const SizedBox(height: 20),
-            ListTile(
-              title: const Text("Amount to Pay"),
-              trailing: Text("\$${widget.car.pricePerHour}", style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            const TextField(decoration: InputDecoration(labelText: "eSewa ID (Mobile Number)")),
-            const TextField(obscureText: true, decoration: InputDecoration(labelText: "MPIN")),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                onPressed: () {
-                  Navigator.pop(context); // Close "Portal"
-                  _saveBookingToFirestore(paymentStatus: "paid", method: "eSewa");
-                },
-                child: const Text("PROCEED TO PAY", style: TextStyle(color: Colors.white)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }*/
-
-  // --- CORE DATA FLOW: SAVING TO FIRESTORE ---
-  Future<void> _saveBookingToFirestore({required String paymentStatus, required String method}) async {
-    final authProvider = Provider.of<AuthProviderMethod>(context, listen: false);
-    final userId = authProvider.user?.uid;
-    if (userId == null) return;
-
-    // Show Loading
-    showDialog(context: context, barrierDismissible: false, builder: (context) => const Center(child: CircularProgressIndicator()));
-
-    try {
-      // 1. Create a Booking Document
-      await FirebaseFirestore.instance.collection('bookings').add({
-        'passengerId': userId,
-        'carModel': widget.car.model,
-        'price': widget.car.pricePerHour,
-        'status': 'pending', // Pending owner approval
-        'paymentMethod': method,
-        'paymentStatus': paymentStatus,
-        'timestamp': FieldValue.serverTimestamp(),
-        'pickupLat': widget.pickupLocation.latitude,
-        'pickupLng': widget.pickupLocation.longitude,
-        'carImage': widget.car.image,
-      });
-
-      if (!mounted) return;
-      Navigator.pop(context); // Remove loading
-
-      // 2. Navigate to Confirmation Screen
-      Navigator.push(context, MaterialPageRoute(builder: (context) => BookingConfirmContent(car: widget.car)));
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context); // Remove loading
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Firestore Error: $e")));
-    }
-  }
-
+  // --- PAYMENT OPTION ---
   Widget _paymentOption(String title, IconData icon) {
     bool isSelected = selectedPayment == title;
-    return GestureDetector(
-      onTap: () => setState(() => selectedPayment = title),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? (title == "eSewa" ? Colors.green : Colors.orange) : Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.black54),
-            const SizedBox(width: 8),
-            Text(title, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
-          ],
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => selectedPayment = title),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? (title == "eSewa" ? Colors.green : Colors.orange) : Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: isSelected ? Colors.white : Colors.black54),
+              const SizedBox(width: 8),
+              Text(title, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-
-
-
-
-/*import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart'; // Add this
-import 'package:carrentalapp/data/model/car_model.dart';
-import 'package:carrentalapp/screens/passenger/booking_confirm.dart';
-import '../../auth/auth_provider.dart';
-
-class CarDetailPage extends StatefulWidget {
-  final CarModel car;
-  final LatLng pickupLocation;
-
-  const CarDetailPage({super.key, required this.car, required this.pickupLocation});
-
-  @override
-  State<CarDetailPage> createState() => _CarDetailPageState();
-}
-
-class _CarDetailPageState extends State<CarDetailPage> {
-  String selectedPayment = "Cash";
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.car.model),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  // --- WIDGET HELPER: DATE SECTION ---
+  Widget _buildDateSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Rental Duration', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        Row(
           children: [
-            Image.asset(widget.car.image, height: 250, width: double.infinity, fit: BoxFit.cover),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(widget.car.model, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                      Text('\$${widget.car.pricePerHour}/hr', style: const TextStyle(fontSize: 22, color: Colors.green, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  const Text('Pickup Point', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  Container(
-                    height: 180,
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade300)),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: widget.pickupLocation,
-                          initialZoom: 15.0,
-                          interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.carrentalapp.app',
-                          ),
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: widget.pickupLocation,
-                                child: const Icon(Icons.location_on, color: Colors.red, size: 35),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text('Select Payment Method', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _paymentOption("Cash", Icons.money),
-                      const SizedBox(width: 12),
-                      _paymentOption("eSewa", Icons.account_balance_wallet),
-                    ],
-                  ),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SizedBox(
-          width: double.infinity,
-          height: 55,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: selectedPayment == "eSewa" ? Colors.green : Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              if (selectedPayment == "eSewa") {
-                _payWithEsewaManual();
-              } else {
-                _saveBookingToFirestore("unpaid");
+            _dateCard("Pickup", pickupDate, () async {
+              DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 30)),
+              );
+              if (picked != null) {
+                setState(() => pickupDate = picked);
+                _calculateTotal();
               }
-            },
-            child: Text(
-              selectedPayment == "eSewa" ? "Pay via eSewa" : "Confirm Booking (Cash)",
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+            }),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Icon(Icons.arrow_forward, color: Colors.grey),
             ),
+            _dateCard("Return", returnDate, () async {
+              DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: pickupDate?.add(const Duration(days: 1)) ?? DateTime.now(),
+                firstDate: pickupDate ?? DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 90)),
+              );
+              if (picked != null) {
+                setState(() => returnDate = picked);
+                _calculateTotal();
+              }
+            }),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // --- WIDGET HELPER: DATE CARD ---
+  Widget _dateCard(String label, DateTime? date, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              const SizedBox(height: 4),
+              Text(
+                date == null ? "Select Date" : "${date.day}/${date.month}/${date.year}",
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  // MANUAL ESEWA LAUNCHER (Works on Windows/Chrome/Mobile)
-  Future<void> _payWithEsewaManual() async {
-    final String amount = widget.car.pricePerHour.toString();
-    final String productId = "ride_${DateTime.now().millisecondsSinceEpoch}";
-
-    // We use the Version 1 Test API because it allows GET requests (URL-based)
-    // This is perfect for a Windows/Web Demo
-    final Uri url = Uri.parse(
-        "https://uat.esewa.com.np/epay/main"
-            "?amt=$amount"
-            "&pdc=0"
-            "&psc=0"
-            "&txAmt=0"
-            "&tAmt=$amount"
-            "&pid=$productId"
-            "&scd=EPAYTEST"
-            "&su=https://google.com" // Success redirect
-            "&fu=https://google.com"  // Failure redirect
-    );
-
-    try {
-      // mode: LaunchMode.externalApplication opens the actual browser
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-
-        if (!mounted) return;
-
-        // In a demo, we assume they will complete the payment in the browser
-        // and immediately save the booking in our app.
-        _saveBookingToFirestore("paid");
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not open browser. Please check settings.")),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
-    }
-  }
-
-
-  Future<void> _saveBookingToFirestore(String paymentStatus) async {
-    final authProvider = Provider.of<AuthProviderMethod>(context, listen: false);
-    final userId = authProvider.user?.uid;
-    if (userId == null) return;
-
-    try {
-      await FirebaseFirestore.instance.collection('bookings').add({
-        'passengerId': userId,
-        'carModel': widget.car.model,
-        'price': widget.car.pricePerHour,
-        'status': 'pending',
-        'paymentMethod': selectedPayment,
-        'paymentStatus': paymentStatus,
-        'timestamp': FieldValue.serverTimestamp(),
-        'pickupLat': widget.pickupLocation.latitude,
-        'pickupLng': widget.pickupLocation.longitude,
-        'carImage': widget.car.image,
-      });
-
-      if (mounted) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => BookingConfirmContent(car: widget.car)));
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-    }
-  }
-
-  Widget _paymentOption(String title, IconData icon) {
-    bool isSelected = selectedPayment == title;
-    return GestureDetector(
-      onTap: () => setState(() => selectedPayment = title),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? (title == "eSewa" ? Colors.green : Colors.orange) : Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.black54),
-            const SizedBox(width: 8),
-            Text(title, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
 }
-*/
 
-*/

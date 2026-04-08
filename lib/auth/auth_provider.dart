@@ -39,7 +39,7 @@ class AuthProviderMethod extends ChangeNotifier {
 
   // --- REGISTER ---
   Future<String> signUpWithEmailAndPassword(
-      String name, String email, String password, String role) async {
+      String name, String email, String password,String phone,String role) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
@@ -48,7 +48,8 @@ class AuthProviderMethod extends ChangeNotifier {
       await firebaseUser!.updateDisplayName(name);
 
       String dummyLicenseUrl = "";
-      if (role == 'owner'){
+
+      if (role.toLowerCase() == 'owner') {
         dummyLicenseUrl = "https://cdn-icons-png.flaticon.com/512/3524/3524752.png";
       }
 
@@ -56,7 +57,8 @@ class AuthProviderMethod extends ChangeNotifier {
         'uid': firebaseUser.uid,
         'name': name,
         'email': email,
-        'role': role,
+        'phone':phone,
+        'role': role.toLowerCase(),
         'licenseImageUrl': dummyLicenseUrl,
         'isVerified': true,
         'createdAt': FieldValue.serverTimestamp(),

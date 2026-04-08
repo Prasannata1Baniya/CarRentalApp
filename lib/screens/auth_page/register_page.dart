@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
-import 'package:carrentalapp/auth/auth_provider.dart';
-import 'package:carrentalapp/utils/input_decoration.dart';
-import 'package:carrentalapp/utils/text_styles.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../auth/auth_provider.dart';
+import '../../utils/input_decoration.dart';
+import '../../utils/text_styles.dart';
 import 'login_page.dart';
 import 'dart:ui';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -25,10 +24,10 @@ class _RegisterPageState extends State<RegisterPage> {
   final _nameController = TextEditingController();
   final _numController =TextEditingController();
 
-  String _phoneNumber='';
-   FocusNode focusNode = FocusNode();
+  FocusNode focusNode = FocusNode();
+  String _phoneNumber="";
 
-
+  //final List<String> roles = ['Passenger', 'owner'];
   final List<String> roles = ['passenger', 'owner'];
   String? selectedRole;
   String? error;
@@ -49,7 +48,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  // --- LOGIC: PICK IMAGE (Works on Web & Mobile) ---
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
@@ -58,7 +57,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     if (pickedFile != null) {
-      // Convert the picked file into bytes so Image.memory can read it
       final bytes = await pickedFile.readAsBytes();
       setState(() {
         _imageData = bytes;
@@ -73,9 +71,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (!_formKey.currentState!.validate()) return;
 
-    // Check for image if passenger
-    if (selectedRole == 'passenger' && _imageData == null) {
-      setState(() => error = "Please upload your Driver's License first");
+    // Check for image if owner
+    if (selectedRole == 'owner' && _imageData == null) {
+      setState(() => error = "Please upload your owner's License first");
       return;
     }
 
@@ -90,6 +88,7 @@ class _RegisterPageState extends State<RegisterPage> {
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text.trim(),
+      _numController.text,
       selectedRole!,
     );
 
@@ -119,13 +118,25 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("assets/images/car_background.png"),
-                fit: BoxFit.cover,
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/car_background.png",
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              height: double.infinity,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.black.withValues(alpha: 0.9),
+                  ],
+                ),
               ),
             ),
           ),
@@ -164,11 +175,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
                                 TextFormField(
                                   controller: _nameController,
-                                  style: const TextStyle(color: Colors.black,
+                                  style: const TextStyle(color: Colors.white70,
                                       fontWeight: FontWeight.bold),
                                   decoration: inputDecorate.buildInputDecoration("Full Name",
-                                  suffixIcon: Icon(Icons.person),
-                                  ),
+                                      suffixIcon: Icon(Icons.person)),
                                   validator: (value) => value == null || value.isEmpty ? "Required" : null,
                                 ),
                                 const SizedBox(height: 16),
@@ -210,6 +220,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     ),
                                   ),
                                 ),
+
                                 const SizedBox(height: 16),
 
                                 //Number
@@ -229,7 +240,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   onChanged: (phone) {
                                     _phoneNumber = phone.completeNumber;
                                   },
-
+                                  // This makes the country picker popup look modern too
                                   pickerDialogStyle: PickerDialogStyle(
                                     backgroundColor: Colors.grey[900],
                                     countryCodeStyle: const TextStyle(color: Colors.white),
@@ -242,7 +253,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
 
                                 const SizedBox(height: 16),
-
                                 DropdownButtonFormField<String>(
                                   initialValue: selectedRole,
                                   decoration: inputDecorate.buildInputDecoration("Select Role"),
@@ -257,13 +267,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                   validator: (value) => value == null ? "Required" : null,
                                 ),
 
-                                // --- DRIVER LICENSE UI ---
-                                if (selectedRole == 'passenger') ...[
+                                // --- owner LICENSE UI ---
+                                if (selectedRole == 'owner') ...[
                                   const SizedBox(height: 20),
                                   const Align(
                                     alignment: Alignment.centerLeft,
-                                    child: Text(" License Document",
-                                        style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                    child: Text(" License Document", style: TextStyle(color: Colors.white70, fontSize: 13)),
                                   ),
                                   const SizedBox(height: 8),
                                   GestureDetector(
@@ -282,12 +291,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                         children: [
                                           Icon(Icons.add_a_photo_outlined, color: Colors.orangeAccent, size: 30),
                                           SizedBox(height: 5),
-                                          Text("Tap to upload License", style: TextStyle(color: Colors.white60, fontSize: 11)),
+                                          Text("Tap to upload License",
+                                              style: TextStyle(color: Colors.white60, fontSize: 11)),
                                         ],
                                       )
                                           : ClipRRect(
                                         borderRadius: BorderRadius.circular(15),
-                                        // FIXED: Use Image.memory instead of Image.file
                                         child: Image.memory(
                                           _imageData!,
                                           fit: BoxFit.cover,

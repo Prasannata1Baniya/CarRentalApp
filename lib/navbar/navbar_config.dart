@@ -9,7 +9,7 @@ import '../screens/passenger/profile.dart';
 import '../screens/passenger/ride_history.dart';
 
 
-enum UserRole { passenger, driver, owner }
+enum UserRole { passenger, owner }
 
 class NavItem {
   final String label;
@@ -26,7 +26,7 @@ const List<NavItem> passengerDestinations = [
   NavItem(label: 'Profile', icon: Icons.person_outline, screen: PassengerProfileContent()),
 ];
 
-const List<NavItem> driverDestinations = [
+const List<NavItem> ownerDestinations = [
   NavItem(label: 'Home', icon: Icons.home_outlined, screen: OwnerHomeContent()),
   NavItem(label: 'Car', icon: Icons.directions_car, screen: CarManagementContent()),
   NavItem(label: 'Earning', icon: Icons.monetization_on_outlined, screen: OwnerEarningContent()),
@@ -34,7 +34,7 @@ const List<NavItem> driverDestinations = [
 ];
 
 List<NavItem> getDestinationsForRole(UserRole role) {
-  return role == UserRole.driver ? driverDestinations : passengerDestinations;
+  return role == UserRole.owner ? ownerDestinations : passengerDestinations;
 }
 
 

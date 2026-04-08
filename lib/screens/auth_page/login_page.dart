@@ -1,12 +1,13 @@
 import 'dart:ui';
+import 'package:carrentalapp/screens/auth_page/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:carrentalapp/auth/auth_provider.dart';
-import 'package:carrentalapp/screens/auth_page/register_page.dart';
-import 'package:carrentalapp/utils/input_decoration.dart';
-import 'package:carrentalapp/utils/text_styles.dart';
+import '../../auth/auth_provider.dart';
 import '../../navbar/navbar_config.dart';
+import '../../utils/input_decoration.dart';
+import '../../utils/text_styles.dart';
 import '../../widgets/app_shell.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,177 +22,277 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   String? error;
   bool isLoading = false;
-
+  bool _isPasswordObscured = true;
   final InputDecorate inputDecorate = InputDecorate();
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
+    if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
     setState(() {
       isLoading = true;
       error = null;
     });
 
-    final authProvider = context.read<AuthProviderMethod>();
+    try {
+      final authProvider = context.read<AuthProviderMethod>();
 
-    // 1. Authenticate
-    final message = await authProvider.loginWithEmailAndPassword(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
-
-    if (!mounted) return;
-
-    if (message == 'Success') {
-      // 2. Fetch the role from Firestore
-      String roleString = await authProvider.getUserRole(authProvider.user!.uid);
-
-      // 3. Convert to Enum
-      UserRole roleEnum = (roleString == 'owner') ? UserRole.owner : UserRole.passenger;
+      // 1. Log in
+      final message = await authProvider.loginWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
 
       if (!mounted) return;
 
-      // 4. Navigate to NavigationShell with the correct role
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => AppShell(userRole: roleEnum),
-        ),
-      );
-    } else {
+      if (message == 'Success') {
+        // 2. Fetch the role string from Firestore
+        String roleString = await authProvider.getUserRole(
+            authProvider.user!.uid);
+
+        debugPrint("Logged in as: $roleString");
+
+        // 4. Trim and lowercase the comparison
+        final role = (roleString.toLowerCase().trim() == 'owner')
+            ? UserRole.owner
+            : UserRole.passenger;
+
+        if (!mounted) return;
+
+        // 5. Navigate to the Shell with the CORRECT role
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => AppShell(userRole: role)),
+        );
+      } else {
+        setState(() {
+          error = message;
+        });
+      }
+    } catch (e) {
       setState(() {
-        isLoading = false;
-        error = message;
+        error = "Login Error: $e";
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              image: DecorationImage(image: AssetImage("assets/images/car_background.png"), fit: BoxFit.cover),
+          // 1. BACKGROUND IMAGE
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/car_background.png",
+              fit: BoxFit.cover,
             ),
           ),
-          Center(
-            child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text("Login", style: AppTextStyles.headingWhite),
-          const SizedBox(height: 20),
 
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 450,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(25),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 200, sigmaY: 200),
-                child: Container(
-                  padding: const EdgeInsets.all(32.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all(
-                      width: 1.5,
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset("assets/images/SajiloRide_logo.png", height: 100),
-                        const SizedBox(height: 30),
-
-                        // Email Field
-                        TextFormField(
-                          controller: _emailController,
-                          style: const TextStyle(color: Colors.white),
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: inputDecorate.buildInputDecoration("Email").copyWith(
-                            labelStyle: const TextStyle(color: Colors.white70),
-                          ),
-                          validator: (value) => (value == null || !value.contains('@')) ? 'Enter a valid email' : null,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Password Field
-                        TextFormField(
-                          controller: _passwordController,
-                          style: const TextStyle(color: Colors.white),
-                          obscureText: true,
-                          decoration: inputDecorate.buildInputDecoration("Password").copyWith(
-                            labelStyle: const TextStyle(color: Colors.white70),
-                          ),
-                          validator: (value) => (value == null || value.length < 6) ? 'Password must be at least 6 characters' : null,
-                        ),
-
-                        // Error Text
-                        if (error != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 20),
-                            child: Text(
-                              error!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-
-                        const SizedBox(height: 32),
-
-                        // Login Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                              backgroundColor: Colors.orangeAccent,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: isLoading ? null : _handleLogin,
-                            child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text("LOGIN", style: TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Register
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text("Don't have an account? ", style: TextStyle(color: Colors.white70)),
-                            GestureDetector(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
-                              child: const Text("Register", style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.black.withValues(alpha: 0.9),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
-      ),
-    ),
-   ),
+
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0, vertical: 20),
+              child: Column(
+                children: [
+                  // Header Branding
+                  const Text("Sajilo Ride", style: AppTextStyles.headingWhite),
+                  const SizedBox(height: 8),
+                  const Text("Your premium journey starts here",
+                      style: TextStyle(color: Colors.white60, fontSize: 14)),
+                  const SizedBox(height: 30),
+
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 200, sigmaY: 200),
+                        child: Container(
+                          padding: const EdgeInsets.all(32.0),
+                          decoration: BoxDecoration(
+                            // Darker glass for better contrast with Orange/Red
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              width: 1,
+                              color: Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset("assets/images/SajiloRide_logo.png",
+                                    height: 80),
+                                const SizedBox(height: 40),
+
+                                // Email
+                                TextFormField(
+                                  controller: _emailController,
+                                  style: const TextStyle(color: Colors.white),
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: inputDecorate
+                                      .buildInputDecoration(
+                                    "Email",
+                                    suffixIcon: const Icon(Icons.email_outlined,
+                                        color: Colors.white38, size: 20),
+                                  ),
+                                  validator: (value) =>
+                                  (value == null || !value.contains('@'))
+                                      ? 'Invalid email'
+                                      : null,
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Password
+                                TextFormField(
+                                  controller: _passwordController,
+                                  style: const TextStyle(color: Colors.white),
+                                  obscureText: _isPasswordObscured,
+                                  decoration: inputDecorate
+                                      .buildInputDecoration(
+                                    "Password",
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordObscured ? Icons
+                                            .visibility_off_outlined : Icons
+                                            .visibility_outlined,
+                                        color: Colors.white38, size: 20,
+                                      ),
+                                      onPressed: () =>
+                                          setState(() =>
+                                          _isPasswordObscured =
+                                          !_isPasswordObscured),
+                                    ),
+                                  ),
+                                  validator: (value) =>
+                                  (value == null || value.length < 6)
+                                      ? 'Short password'
+                                      : null,
+                                ),
+
+                                if (error != null)
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    margin: const EdgeInsets.only(top: 20),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.red.withValues(alpha: 0.35),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.info_outline,
+                                          color: Colors.red,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            error!,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                const SizedBox(height: 35),
+
+                                // Login Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 55,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              15)),
+                                      //backgroundColor: Colors.orangeAccent,
+                                      // shadowColor: Colors.orangeAccent.withValues(alpha: 0.4),
+                                      backgroundColor: const Color(0xFFFF9F43),
+                                      shadowColor: const Color(0xFFFF9F43).withValues(alpha: 0.3),
+                                      foregroundColor: Colors.white,
+                                      elevation: 8,
+                                    ),
+                                    onPressed: isLoading ? null : _handleLogin,
+                                    child: isLoading
+                                        ? const SizedBox(height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2))
+                                        : const Text("LOGIN", style: TextStyle(
+                                        letterSpacing: 1.5,
+                                        fontWeight: FontWeight.bold)),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 25),
+
+                                // Register Link
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text("New here? ", style: TextStyle(
+                                        color: Colors.white54)),
+                                    GestureDetector(
+                                      onTap: () =>
+                                          Navigator.push(context,
+                                              MaterialPageRoute(builder: (
+                                                  _) => const RegisterPage())),
+                                      child: const Text("Create Account",
+                                          style: TextStyle(
+                                              color: Colors.orangeAccent,
+                                              fontWeight: FontWeight.bold,
+                                              decoration: TextDecoration
+                                                  .underline)),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
