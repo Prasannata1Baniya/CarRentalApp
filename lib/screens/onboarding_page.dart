@@ -82,11 +82,11 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
               Container(
                 key: _heroKey,
                 width: double.infinity,
-                height: MediaQuery.of(context).size.height * 0.96,
+                height: MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     image: isDesktop
-                        ? const AssetImage("assets/images/onboarding_bg.png")
+                        ? const AssetImage("assets/images/car_rental-onboarding.png")
                         : const AssetImage("assets/images/onboarding_bg(mobile).png"),
                     fit: BoxFit.cover,
                   ),

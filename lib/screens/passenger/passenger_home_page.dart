@@ -1,8 +1,10 @@
 import 'dart:convert';
+
 import 'package:carrentalapp/auth/auth_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:carrentalapp/data/model/car_model.dart';
@@ -39,7 +41,92 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
 
   String _address = "Fetching address...";
 
+
+  Future<Position?> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // 1. Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if(mounted) {
+      if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location services are disabled. Please enable them.'))
+      );
+      return null;
+    }
+    }
+
+    // 2. Check and request permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (mounted && permission == LocationPermission.denied) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permissions are denied.'))
+      );
+      return null;
+      }
+    }
+
+    if(mounted) {
+      if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permissions are permanently denied.'))
+      );
+      return null;
+    }
+    }
+
+    // 3. Get the current position
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+        ),
+      );
+    } catch (e) {
+      debugPrint("Error getting location: $e");
+      return null;
+    }
+  }
+
   Future<void> _updateAddress(LatLng position) async {
+    try {
+      final url = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.latitude}&lon=${position.longitude}&zoom=18&addressdetails=1'
+      );
+
+      final response = await http.get(url, headers: {
+        'User-Agent': 'com.prasannata.carrentalapp' ,// Nominatim requires a User-Agent
+        'Accept': 'application/json',
+      });
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final address = data['address'];
+
+
+        String city = address['city'] ?? address['town'] ?? address['village'] ?? '';
+        String road = address['road'] ?? address['suburb'] ?? '';
+        String displayName = road.isNotEmpty ? "$road, $city" : city;
+
+        if (!mounted) return;
+        setState(() {
+          _address = displayName.isNotEmpty ? displayName : "Location Found";
+        });
+      }
+    } catch (e) {
+      debugPrint("Geocoding error: $e");
+      if (!mounted) return;
+      setState(() {
+        _address = "Point: ${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)}";
+      });
+    }
+  }
+
+ /* Future<void> _updateAddress(LatLng position) async {
     try {
       final url = Uri.parse(
           'https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.latitude}&lon=${position.longitude}'
@@ -61,7 +148,8 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
         _address = "${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)}";
       });
     }
-  }
+  }*/
+
   /*Future<void> _updateAddress(LatLng position) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -144,19 +232,27 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
     );
   }
 
+  Future<void> _initLocation() async {
+    Position? position = await _getCurrentLocation();
+    if (position != null && mounted) {
+      LatLng newPoint = LatLng(position.latitude, position.longitude);
+      _mapController.move(newPoint, 14.0);
+      setState(() {
+        _currentCenter = newPoint;
+        _address = "Current Location";
+      });
+    }
+  }
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _updateAddress(_currentCenter);
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initLocation());
   }
 
   @override
   Widget build(BuildContext context) {
     bool isWideScreen = MediaQuery.of(context).size.width > 900;
     final authProvider = Provider.of<AuthProviderMethod>(context);
-    final AuthProviderMethod auth =AuthProviderMethod();
 
     return Scaffold(
       appBar: AppBar(
@@ -269,8 +365,24 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
             initialZoom: 14.0,
             onPositionChanged: (pos, hasGesture) {
               if (hasGesture) {
-                setState(() => _currentCenter = pos.center);
-                _updateAddress(pos.center);
+                setState(() {
+                  _currentCenter = pos.center;
+                  _address = "Updating";
+                });
+              }
+            },
+            //  Update address ONLY when user stops moving map
+            onMapEvent: (event) {
+              if (event is MapEventMoveEnd) {
+                // 1. Extract the center from the event
+                // In newer flutter_map versions, it's event.camera.center
+                final centerPos = event.camera.center;
+
+                // 2. Call the geocoding function
+                _updateAddress(centerPos);
+
+                // 3. Optional: Set a temporary state so the user knows it's loading
+                setState(() => _address = "Locating...");
               }
             },
           ),

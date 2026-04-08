@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       child:  const MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Car Rental App',
-        home: OnBoardingPage(),
+        home: AuthWrapper(),
       ),
     );
   }
@@ -41,7 +41,7 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProviderMethod>(builder: (context, authProvider, child) {
       if (authProvider.user == null) {
-        return const LoginPage();
+        return const OnBoardingPage();
       } else {
         return const RoleWrapper();
       }
