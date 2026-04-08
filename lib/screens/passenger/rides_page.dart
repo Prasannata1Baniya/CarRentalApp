@@ -60,7 +60,7 @@ class MyRidesPage extends StatelessWidget {
     final userId = authProvider.user?.uid;
 
     return Scaffold(
-      // --- FIX: USE A LIGHT GREY BACKGROUND TO MAKE WHITE CARDS POP ---
+      // ---GREY BACKGROUND TO MAKE WHITE CARDS POP ---
       backgroundColor: const Color(0xFFF5F7F9),
       appBar: AppBar(
         title: const Text("My Active Rides",
