@@ -22,7 +22,8 @@ class _AppShellState extends State<AppShell> {
   late int _currentIndex;
   late List<NavItem> _destinations;
 
-  static const Color kBrandDarkBackground = Color(0xFF221F1E);
+  //static const Color kBrandDarkBackground = Color(0xFF221F1E);
+  static const Color kBrandDarkBackground = Color(0xFF112233);
   static const Color kAccentOrangeHighlight = Color(0xFFFFA24D);
   static const Color kMutedUnselected = Color(0xFF9E9E9E);
 
@@ -140,7 +141,7 @@ class _AppShellState extends State<AppShell> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08), // Modern optimized syntax
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),

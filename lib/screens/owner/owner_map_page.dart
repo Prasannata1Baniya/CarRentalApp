@@ -25,7 +25,6 @@ class OwnerMapPage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // 1. THE MAP showing the Passenger's Pin
           FlutterMap(
             options: MapOptions(
               initialCenter: pickupLocation,
@@ -53,7 +52,6 @@ class OwnerMapPage extends StatelessWidget {
             ],
           ),
 
-          // 2. BOTTOM INFO CARD
           Positioned(
             bottom: 20,
             left: 20,
@@ -138,7 +136,6 @@ class OwnerMapPage extends StatelessWidget {
     );
   }
 
-  // LOGIC: Final Acceptance
   Future<void> _confirmAcceptance(BuildContext context) async {
     try {
       await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
@@ -150,7 +147,6 @@ class OwnerMapPage extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Ride Accepted! Get moving!"), backgroundColor: Colors.green),
         );
-        // After accepting, we go back to the dashboard or an "Active Trip" screen
         Navigator.pop(context);
       }
     } catch (e) {
@@ -161,7 +157,6 @@ class OwnerMapPage extends StatelessWidget {
   }
 }
 
-// 1. UPDATED WIDGET
 class PickupAddressWidget extends StatefulWidget {
   final double lat;
   final double lng;
@@ -172,7 +167,7 @@ class PickupAddressWidget extends StatefulWidget {
 }
 
 class _PickupAddressWidgetState extends State<PickupAddressWidget> {
-  String? address; // Changed to nullable to track loading state
+  String? address;
 
   @override
   void initState() {
@@ -194,7 +189,7 @@ class _PickupAddressWidgetState extends State<PickupAddressWidget> {
         setState(() => address = "${p.street ?? ''}, ${p.locality ?? ''}".replaceAll(RegExp(r'^,\s*'), ''));
       }
     } catch (e) {
-      if (mounted) setState(() => address = "Address unavailable");
+      if (mounted) setState(() => address = "Address Unavailable");
     }
   }
 

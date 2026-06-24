@@ -10,6 +10,7 @@ import 'package:esewa_flutter_sdk/esewa_payment.dart';
 import 'package:esewa_flutter_sdk/esewa_payment_success_result.dart';
 import 'package:carrentalapp/data/model/car_model.dart';
 import 'package:carrentalapp/screens/passenger/booking_confirm.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../auth/auth_provider.dart';
 
 class CarDetailPage extends StatefulWidget {
@@ -45,6 +46,29 @@ class _CarDetailPageState extends State<CarDetailPage> {
       setState(() {
         totalAmount = days * widget.car.pricePerDay.toDouble();
       });
+    }
+  }
+
+  // In your _CarDetailPageState
+  String? ownerPhoneNumber;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOwnerPhone();
+  }
+
+  Future<void> _fetchOwnerPhone() async {
+    try {
+      // Assuming 'ownerId' in car document corresponds to the user UID
+      final doc = await FirebaseFirestore.instance.collection('users').doc(widget.car.ownerId).get();
+      if (doc.exists) {
+        setState(() {
+          ownerPhoneNumber = doc.data()?['phone'] ?? 'No Phone';
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching phone: $e");
     }
   }
 
@@ -190,6 +214,25 @@ class _CarDetailPageState extends State<CarDetailPage> {
         ),
         const SizedBox(height: 24),
         Text(widget.car.model, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF221F1E))),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 7,
+          children: [
+            _buildSpecTile(Icons.palette_rounded, "Color", widget.car.color),
+            _buildSpecTile(Icons.local_gas_station_rounded, "Fuel", widget.car.fuelType),
+            _buildSpecTile(Icons.numbers_rounded, "Plate No.", widget.car.carNumber),
+            _buildSpecTile(
+              Icons.phone_rounded,
+              "Contact",
+              widget.car.ownerPhone,
+              onTap: () => _makePhoneCall(widget.car.ownerPhone),
+            ),
+          ],
+        ),
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 16.0),
           child: Divider(),
@@ -263,10 +306,10 @@ class _CarDetailPageState extends State<CarDetailPage> {
 
   Widget _buildBookingCard() {
     return Card(
-      color: Colors.white,
-      surfaceTintColor: Colors.transparent,
+     color: Colors.white,
+     //surfaceTintColor: Colors.transparent,
       elevation: 6,
-      shadowColor: Colors.black.withValues(alpha: 0.05),
+      //shadowColor: Colors.black.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -291,7 +334,7 @@ class _CarDetailPageState extends State<CarDetailPage> {
                 initialDate: DateTime.now(),
                 firstDate: DateTime.now(),
                 lastDate: DateTime.now().add(const Duration(days: 30)),
-                builder: (context, child) => _buildPremiumDatePickerTheme(context, child!), // Injects theme overrides here!
+                builder: (context, child) => _buildPremiumDatePickerTheme(context, child!),
               );
               if (picked != null) {
                 setState(() => pickupDate = picked);
@@ -326,15 +369,12 @@ class _CarDetailPageState extends State<CarDetailPage> {
             const SizedBox(height: 20),
             if (totalAmount > 0) ...[
               const Divider(),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Total", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text("Rs. $totalAmount", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange)),
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Total", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Rs. $totalAmount", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange)),
+                ],
               ),
               const SizedBox(height: 20),
             ],
@@ -416,6 +456,40 @@ class _CarDetailPageState extends State<CarDetailPage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    await launchUrl(launchUri);
+  }
+
+  Widget _buildSpecTile(IconData icon, String label, String value,{VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          //color: Colors.black,
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.orange, size: 20),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold,color: Colors.black)),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -7,7 +7,6 @@ import '../auth_page/login_page.dart';
 class PassengerProfileContent extends StatelessWidget {
   const PassengerProfileContent({super.key});
 
-  // Synced with your Premium Brand Palette
   static const Color kBrandDark = Color(0xFF221F1E);
   static const Color kAccentOrange = Colors.orange;
   static const Color kBgSurface = Color(0xFFF5F5F7);
@@ -41,11 +40,10 @@ class PassengerProfileContent extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // --- INTERNAL CONTAINER HEADER TITLE ---
                     Padding(
                       padding: const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
                       child: Text(
-                        "My Profile",
+                        "Customer Profile",
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
@@ -55,7 +53,6 @@ class PassengerProfileContent extends StatelessWidget {
                       ),
                     ),
 
-                    // 1. USER HERO PROFILE DETAILS
                     Container(
                       padding: const EdgeInsets.only(top: 16, bottom: 24, left: 20, right: 20),
                       child: Column(
@@ -87,7 +84,6 @@ class PassengerProfileContent extends StatelessWidget {
 
                     const Divider(thickness: 1, height: 1, indent: 24, endIndent: 24),
 
-                    // 2. PASSENGER MENU TILES
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                       child: Column(
@@ -129,7 +125,6 @@ class PassengerProfileContent extends StatelessWidget {
                     const Divider(thickness: 1, height: 1, indent: 24, endIndent: 24),
                     const SizedBox(height: 24),
 
-                    // 3. LOGOUT CTA FIELD
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: SizedBox(
@@ -198,7 +193,6 @@ class PassengerProfileContent extends StatelessWidget {
     );
   }
 
-  // --- LOGOUT DIALOG ---
   void _handleLogout(BuildContext context, AuthProviderMethod auth) {
     showDialog(
       context: context,

@@ -26,7 +26,6 @@ class BookingConfirmContent extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // --- 1. SUCCESS ICON ---
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -41,7 +40,6 @@ class BookingConfirmContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
 
-                  // --- 2. SUCCESS TEXT ---
                   const Text(
                     "Booking Confirmed!",
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: kPrimaryDark, letterSpacing: -0.5),
@@ -54,7 +52,6 @@ class BookingConfirmContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 35),
 
-                  // --- 3. SUMMARY CARD ---
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -72,7 +69,6 @@ class BookingConfirmContent extends StatelessWidget {
                       children: [
                         _buildSummaryRow("Car Model", car.model),
                         const Divider(height: 24, color: kBgLight),
-                        // FIXED: Changed display from "/hr" to "/day" to match your system
                         _buildSummaryRow("Price", "Rs. ${car.pricePerDay}/day"),
                         const Divider(height: 24, color: kBgLight),
                         _buildSummaryRow("Status", "Reserved", isStatus: true),
@@ -81,7 +77,6 @@ class BookingConfirmContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 45),
 
-                  // --- 4. BACK TO HOME BUTTON ---
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -108,7 +103,6 @@ class BookingConfirmContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // --- 5. VIEW RIDES BUTTON ---
                   TextButton(
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(

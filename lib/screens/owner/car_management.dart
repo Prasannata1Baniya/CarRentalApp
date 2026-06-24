@@ -302,7 +302,6 @@ class _CarManagementContentState extends State<CarManagementContent> {
     return null;
   }
 
-  // Refactored method signature to support hint injection cleanly
   Widget _buildDecoratedField(TextEditingController controller, String label, String example, IconData icon, {bool isNumeric = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -312,7 +311,7 @@ class _CarManagementContentState extends State<CarManagementContent> {
         keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
         style: const TextStyle(color: Color(0xFF112233)),
         decoration: inputDecorate.buildInputDecoration(
-          "$label (e.g., $example)", // Smoothly combines Title + Example placeholder text
+          "$label (e.g., $example)",
           prefixIcon: Icon(icon, color: Colors.grey.shade600, size: 20),
         ),
         validator: (value) {

@@ -8,22 +8,18 @@ class InputDecorate {
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
       filled: true,
-      // Use a slightly darker gray for the background to make the fields "pop"
       fillColor: Colors.grey.shade100,
       contentPadding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 16.0),
-
-      // MODERN STYLE: No border, just a clean bottom line or subtle rounded corner
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none, // Removes the ugly box border
+        borderSide: BorderSide.none,
       ),
 
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFFF5500), width: 2), // Only show color when active
+        borderSide: const BorderSide(color: Color(0xFFFF5500), width: 2),
       ),
 
-      // Add subtle shadow effect by using a soft error color
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.redAccent, width: 1),

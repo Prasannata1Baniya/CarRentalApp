@@ -24,14 +24,20 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
   static const Color kAccentGold = Color(0xFFFFA24D);
   static const Color kBgLight = Color(0xFFF5F5F7);
 
-  final List<CarModel> carList = [
-    CarModel(model: "Fortuner GR", pricePerDay: 1000, fuelCapacity: 50, image: "assets/images/car1.jpg", ownerId: ''),
-    CarModel(model: "Land Cruiser", pricePerDay: 1000, fuelCapacity: 80, image: "assets/images/car2.jpg", ownerId: ''),
-    CarModel(model: "Tesla Model X", pricePerDay: 1000, fuelCapacity: 100, image: "assets/images/car3.jpg", ownerId: ''),
-    CarModel(model: "Hyundai Tucson", pricePerDay: 1000, fuelCapacity: 55, image: "assets/images/car4.jpg", ownerId: ''),
-    CarModel(model: "Kia Sportage", pricePerDay: 1000, fuelCapacity: 60, image: "assets/images/car2.jpg", ownerId: ''),
-    CarModel(model: "Suzuki Vitara", pricePerDay: 1000, fuelCapacity: 45, image: "assets/images/car3.jpg", ownerId: ''),
-  ];
+  /*final List<CarModel> carList = [
+    CarModel(model: "Fortuner GR", pricePerDay: 1000, fuelCapacity: 50, image: "assets/images/car1.jpg", ownerId: '',
+        fuelType: '', color: '', carNumber: '', ownerPhone: ''),
+    CarModel(model: "Land Cruiser", pricePerDay: 1000, fuelCapacity: 80, image: "assets/images/car2.jpg",
+        ownerId: '', fuelType: '', color: '', carNumber: '', ownerPhone: ''),
+    CarModel(model: "Tesla Model X", pricePerDay: 1000, fuelCapacity: 100, image: "assets/images/car3.jpg", ownerId: '',
+        fuelType: '', color: '', carNumber: '', ownerPhone: ''),
+    CarModel(model: "Hyundai Tucson", pricePerDay: 1000, fuelCapacity: 55, image: "assets/images/car4.jpg", ownerId: '',
+        fuelType: '', color: '', carNumber: '', ownerPhone: ''),
+    CarModel(model: "Kia Sportage", pricePerDay: 1000, fuelCapacity: 60, image: "assets/images/car2.jpg", ownerId: '',
+        fuelType: '', color: '', carNumber: '', ownerPhone: ''),
+    CarModel(model: "Suzuki Vitara", pricePerDay: 1000, fuelCapacity: 45, image: "assets/images/car3.jpg", ownerId: '', fuelType: '',
+        color: '', carNumber: '', ownerPhone: ''),
+  ];*/
 
   String _address = "Locating your premium pickup point...";
 
@@ -136,6 +142,7 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
                 pricePerDay: (data['pricePerDay'] ?? 0).toDouble(),
                 fuelCapacity: (data['fuelCapacity'] ?? 0).toDouble(),
                 image: data['carImage'] ?? 'assets/images/car1.jpg',
+                fuelType: '', color: '', carNumber: '', ownerPhone: '',
               );
             }).toList();
           }

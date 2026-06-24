@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:carrentalapp/screens/auth_page/login_page.dart';
 import 'package:carrentalapp/utils/text_styles.dart';
 import 'package:carrentalapp/widgets/car_card.dart';
@@ -319,3 +319,4 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     );
   }
 }
+*/

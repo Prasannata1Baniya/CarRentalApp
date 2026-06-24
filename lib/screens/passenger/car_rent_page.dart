@@ -49,7 +49,7 @@ class RentCarPage extends StatelessWidget {
         Expanded(
           child: Container(
             color: const Color(0xFFF8F9FA),
-            alignment: Alignment.topCenter, // Content starts from the top
+            alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200),
               child: StreamBuilder<QuerySnapshot>(
@@ -107,14 +107,21 @@ class RentCarPage extends StatelessWidget {
                             DocumentSnapshot doc = cars[index];
                             var carData = doc.data() as Map<String, dynamic>;
 
-                            CarModel currentCar = CarModel(
+                            // Inside itemBuilder:
+                            debugPrint("RAW DATA: ${doc.data()}");
+                            CarModel currentCar = CarModel.fromFirestore(doc);
+
+                           /* CarModel currentCar = CarModel(
                               model: carData['carModel'] ?? 'Unknown',
                               pricePerDay: (carData['pricePerDay'] as num?)?.toDouble() ?? 0.0,
                               fuelCapacity: (carData['fuelCapacity'] as num?)?.toDouble() ?? 0.0,
                               image: carData['carImage'] ?? '',
                               ownerId: doc.id,
-                            );
-
+                              fuelType: carData['fuelType'] ?? 'N/A',
+                              color: carData['carColor'] ?? 'N/A',
+                              carNumber: carData['plateNumber'] ?? 'N/A',
+                              ownerPhone: carData['ownerPhone'] ?? 'N/A',
+                            );*/
                             return GestureDetector(
                               onTap: () {
                                 Navigator.push(
@@ -132,6 +139,7 @@ class RentCarPage extends StatelessWidget {
                                 model: currentCar.model,
                                 price: currentCar.pricePerDay.toString(),
                                 imageUrl: currentCar.image,
+                                fuelType: currentCar.fuelType,
                               ),
                             );
                           }
@@ -148,7 +156,8 @@ class RentCarPage extends StatelessWidget {
   }
 
 
-  Widget _buildCarCard({required String model, required String price, String? imageUrl}) {
+  Widget _buildCarCard({required String model, required String price,
+    String? imageUrl,required final String fuelType}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -223,6 +232,19 @@ class RentCarPage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     )
+                ),
+
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    fuelType,
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54),
+                  ),
                 ),
               ],
             ),
