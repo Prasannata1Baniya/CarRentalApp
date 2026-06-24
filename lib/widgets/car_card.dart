@@ -1,98 +1,191 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:carrentalapp/data/model/car_model.dart';
-import 'package:carrentalapp/utils/text_styles.dart';
 import '../screens/passenger/car_detail_page.dart';
 
 class CarCard extends StatelessWidget {
   final CarModel car;
   final LatLng pickupLocation;
+  final String pickupAddress;
   final Color? buttonColor;
-
 
   const CarCard({
     super.key,
     required this.car,
     required this.pickupLocation,
+    required this.pickupAddress,
     this.buttonColor,
   });
 
+  static const Color kBrandDark = Color(0xFF221F1E);
+  static const Color kAccentOrange = Color(0xFFFFA24D);
+  static const Color kTextMuted = Color(0xFF7A7A7A);
+
   @override
   Widget build(BuildContext context) {
-
-    return InkWell(
-      onTap: () => _navigateToDetails(context),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        color: Colors.white,
-        elevation: 5,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AspectRatio(
-              aspectRatio: 1.5,
-              child: car.image.startsWith('http')
-                  ? Image.network(car.image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.directions_car, size: 50),
-              )
-                  : Image.asset(
-                car.image,
-                fit: BoxFit.cover,
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    car.model,
-                    style: AppTextStyles.bodyTextBlack,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  _buildInfoRow(
-                    icon: Icons.gps_fixed,
-                    label: 'Dist',
-                    value: '${car.distance.toStringAsFixed(0)} km',
-                  ),
-                  _buildInfoRow(
-                    icon: Icons.local_gas_station_outlined,
-                    label: 'Fuel',
-                    value: '${car.fuelCapacity.toStringAsFixed(0)} L',
-                  ),
-                  _buildInfoRow(
-                    icon: Icons.price_change_outlined,
-                    label: 'Price',
-                    value: 'Rs ${car.pricePerHour.toStringAsFixed(0)}/hr',
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0, vertical: 4.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor ?? Colors.orange,
-                  minimumSize: const Size(double.infinity, 42),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: () => _navigateToDetails(context),
-                child: const Text(
-                  "View Details",
-                  style: TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: kBrandDark.withValues(alpha: 0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: () => _navigateToDetails(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                          child: car.image.startsWith('http')
+                              ? Image.network(
+                            car.image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey.shade100,
+                              child: const Icon(Icons.directions_car_filled_rounded, color: kTextMuted, size: 40),
+                            ),
+                          )
+                              : Image.asset(
+                            car.image,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withValues(alpha: 0.12),
+                                Colors.transparent,
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        car.model,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: kBrandDark,
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          _buildDivider(),
+                          _buildInlineSpec(Icons.local_gas_station_rounded, '${car.fuelCapacity.toStringAsFixed(0)}L'),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "PRICE",
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: kTextMuted,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Rs ${car.pricePerDay.toStringAsFixed(0)}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: kBrandDark,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: '/day',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: kTextMuted,
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Premium CTA Button
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: buttonColor ?? kAccentOrange,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () => _navigateToDetails(context),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "Details",
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.3),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(Icons.arrow_forward_rounded, size: 14),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -102,34 +195,35 @@ class CarCard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            CarDetailPage(
-              car: car,
-              pickupLocation: pickupLocation,
-            ),
+        builder: (context) => CarDetailPage(
+          car: car,
+          pickupLocation: pickupLocation,
+          pickupAddress: pickupAddress,
+        ),
       ),
     );
   }
 
-  Widget _buildInfoRow(
-      {required IconData icon, required String label, required String value}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: Colors.black54),
-          const SizedBox(width: 4),
-          Text(
-            '$label: ',
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
+  Widget _buildInlineSpec(IconData icon, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: kTextMuted),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12, color: kBrandDark, fontWeight: FontWeight.w500),
+        ),
+      ],
     );
   }
 
+  Widget _buildDivider() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      width: 1,
+      height: 12,
+      color: Colors.grey.shade300,
+    );
+  }
 }

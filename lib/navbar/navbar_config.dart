@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:carrentalapp/screens/passenger/rides_page.dart';
+import 'package:carrentalapp/screens/passenger/car_rent_page.dart';
 import '../screens/owner/car_management.dart';
 import '../screens/owner/earning_page.dart';
 import '../screens/owner/owner_home_content.dart';
 import '../screens/owner/owner_profile.dart';
 import '../screens/passenger/passenger_home_page.dart';
 import '../screens/passenger/profile.dart';
-import '../screens/passenger/ride_history.dart';
+import '../screens/passenger/history.dart';
 
 
 enum UserRole { passenger, owner }
@@ -18,11 +18,10 @@ class NavItem {
   const NavItem({required this.label, required this.icon, required this.screen});
 }
 
-
 const List<NavItem> passengerDestinations = [
   NavItem(label: 'Home', icon: Icons.home, screen: PassengerHomeContent()),
-  NavItem(label: "Booking", icon: Icons.book_online_outlined, screen: MyRidesPage()),
-  NavItem(label: 'History', icon: Icons.history_outlined, screen: RideHistoryContent()),
+  NavItem(label: "Booking", icon: Icons.calendar_month_rounded, screen: RentCarPage()),
+  NavItem(label: 'History', icon: Icons.history_outlined, screen: HistoryPage()),
   NavItem(label: 'Profile', icon: Icons.person_outline, screen: PassengerProfileContent()),
 ];
 

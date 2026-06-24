@@ -1,10 +1,11 @@
-import 'package:carrentalapp/screens/owner/active_ride.dart';
-import 'package:carrentalapp/screens/owner/owner_map_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:carrentalapp/auth/auth_provider.dart';
+
+import 'active_ride.dart';
+import 'owner_map_page.dart';
 
 class OwnerHomeContent extends StatelessWidget {
   const OwnerHomeContent({super.key});
@@ -13,6 +14,8 @@ class OwnerHomeContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProviderMethod>(context);
     final ownerId = authProvider.user?.uid;
+
+    if (ownerId == null) return const Center(child: Text("Not logged in"));
 
     return Scaffold(
       appBar: AppBar(
@@ -23,14 +26,18 @@ class OwnerHomeContent extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('bookings')
+            .where('ownerId', isEqualTo: ownerId)
             .where('status', isEqualTo: 'pending')
-            .orderBy('timestamp', descending: true)
+            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            debugPrint("ERROR: ${snapshot.error}");
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return _buildNoRequests();
           }
@@ -41,7 +48,7 @@ class OwnerHomeContent extends StatelessWidget {
             itemBuilder: (context, index) {
               var doc = snapshot.data!.docs[index];
               var data = doc.data() as Map<String, dynamic>;
-              return _buildRequestCard(context, doc.id, data, ownerId!);
+              return _buildRequestCard(context, doc.id, data, ownerId);
             },
           );
         },
@@ -49,330 +56,220 @@ class OwnerHomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String ownerId) {
-    String? carImagePath = data['carImage']?.toString();
 
+  /*Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String ownerId) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+
       elevation: 5,
+
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+
       child: Padding(
+
         padding: const EdgeInsets.all(16.0),
+
         child: Column(
+
           children: [
+
             Row(
+
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.orange.shade100,
-                  backgroundImage: carImagePath != null
-                      ? (carImagePath.startsWith('http')
-                      ? NetworkImage(carImagePath)
-                      : AssetImage(carImagePath)) as ImageProvider
-                      : null,
-                ),
-                const SizedBox(width: 15),
+
                 Expanded(
+
                   child: Column(
+
                     crossAxisAlignment: CrossAxisAlignment.start,
+
                     children: [
+
                       Text(data['carModel'] ?? "Unknown Car",
+
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text("Payment: ${data['paymentMethod']}",
+
+                      Text("Payment: ${data['paymentMethod'] ?? 'N/A'}",
+
                           style: TextStyle(
+
                               color: data['paymentStatus'] == 'paid' ? Colors.green : Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12)),
+
+                              fontWeight: FontWeight.bold, fontSize: 12)),
+
                     ],
+
                   ),
+
                 ),
-                Text("\$${data['price']}",
+
+                Text("Rs. ${data['totalPrice'] ?? 0}",
+
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange)),
+
               ],
+
             ),
 
             const Divider(height: 30),
 
             Row(
               children: [
+
                 const Icon(Icons.location_on, color: Colors.red),
-                const SizedBox(width: 10),
-                const Expanded(
-                    child: Text("Pickup: Kathmandu",
-                        style: TextStyle(color: Colors.black54, fontSize: 13))
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerMapPage(
-                      pickupLocation: LatLng(data['pickupLat'], data['pickupLng']),
-                      bookingId: docId,
-                    )));
-                  },
-                  icon: const Icon(Icons.map, size: 18),
-                  label: const Text("VIEW MAP"),
-                )
-              ],
-            ),
 
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _acceptRide(context, docId, ownerId, data),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-                    ),
-                    child: const Text("ACCEPT RIDE"),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
-                  ),
-                  child: const Text("DECLINE"),
-                ),
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _acceptRide(BuildContext context, String docId, String ownerId, Map<String, dynamic> data) async {
-    try {
-      await FirebaseFirestore.instance.collection('bookings').doc(docId).update({
-        'status': 'accepted',
-        'ownerId': ownerId,
-        'acceptedAt': FieldValue.serverTimestamp(),
-      });
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Ride Accepted!"), backgroundColor: Colors.green),
-        );
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ActiveRideContent(
-              bookingId: docId,
-              bookingData: data,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-      }
-    }
-  }
-
-  Widget _buildNoRequests() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.notifications_off_outlined, size: 80, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          const Text("Searching for nearby riders...",
-              style: TextStyle(fontSize: 18, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-
-/*import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
-import 'package:carrentalapp/auth/auth_provider.dart';
-import 'package:carrentalapp/screens/driver/active_ride.dart';
-import 'driver_map_page.dart';
-
-class OwnerHomeContent extends StatelessWidget {
-  const OwnerHomeContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProviderMethod>(context);
-    final ownerId = authProvider.user?.uid;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("New Ride Requests"),
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('bookings')
-            .where('status', isEqualTo: 'pending')
-            .orderBy('timestamp', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildNoRequests();
-          }
-
-          return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
-            padding: const EdgeInsets.all(12),
-              itemBuilder: (context, index) {
-                var doc = snapshot.data!.docs[index];
-                var data = doc.data() as Map<String, dynamic>;
-                String? carImagePath = data['carImage']?.toString();
-                return Card(
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundImage: carImagePath != null
-                            ? (carImagePath.startsWith('http')
-                            ? NetworkImage(carImagePath)
-                            : AssetImage(carImagePath)) as ImageProvider
-                            : null,
-                      ),
-                      // ... rest of your card
-                    ],
-                  ),
-                );
-              }
-            /*itemBuilder: (context, index) {
-              var doc = snapshot.data!.docs[index];
-              var data = doc.data() as Map<String, dynamic>;
-              return _buildRequestCard(context, doc.id, data, ownerId!);
-            },*/
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String ownerId) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                /*CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.orange.shade100,
-                  backgroundImage: data['carImage'] != null ? AssetImage(data['carImage']) : null,
-                ),*/
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(data['carModel'] ?? "Unknown Car", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text("Payment: ${data['paymentMethod']}",
-                          style: TextStyle(color: data['paymentStatus'] == 'paid' ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-                Text("\$${data['price']}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange)),
-              ],
-            ),
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.orange.shade100,
-              backgroundImage: data['carImage'] != null
-                  ? (data['carImage'].toString().startsWith('http')
-                  ? NetworkImage(data['carImage'].toString())
-                  : AssetImage(data['carImage'].toString())) as ImageProvider
-                  : null,
-            ),
-            const Divider(height: 30),
-            Row(
-              children: [
-                const Icon(Icons.location_on, color: Colors.red),
                 const SizedBox(width: 10),
                 const Expanded(child: Text("Pickup: Kathmandu (Click to see on Map)", style: TextStyle(color: Colors.black54))),
                 TextButton.icon(
                   onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerMapPage(
 
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => DriverMapPage(
                       pickupLocation: LatLng(data['pickupLat'], data['pickupLng']),
+
                       bookingId: docId,
+
                     )));
+
                   },
+
                   icon: const Icon(Icons.map, size: 18),
                   label: const Text("VIEW MAP"),
+
                 )
+
               ],
+
             ),
 
             const SizedBox(height: 10),
 
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    // Pass 'data' here so the function can send it to the ActiveRidePage
-                    onPressed: () => _acceptRide(context, docId, ownerId, data),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text("ACCEPT RIDE"),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text("DECLINE"),
-                ),
-              ],
-            )
+            ElevatedButton(
+              onPressed: () => _acceptRide(context, docId, ownerId, data),
+              child: const Text("ACCEPT RIDE"),
+
+            ),
           ],
         ),
       ),
     );
+
+  }*/
+
+  Widget _buildRequestCard(BuildContext context, String docId, Map<String, dynamic> data, String ownerId) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24), // Highly rounded corners look more modern
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05), // Very subtle shadow
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Model & Price
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(data['carModel'] ?? "Unknown",
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF221F1E))),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: (data['paymentStatus'] == 'paid' ? Colors.green.shade50 : Colors.red.shade50),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(data['paymentMethod']?.toUpperCase() ?? "CASH",
+                        style: TextStyle(color: data['paymentStatus'] == 'paid' ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 10)),
+                  ),
+                ],
+              ),
+              Text("Rs. ${data['totalPrice'] ?? 0}",
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.orange)),
+            ],
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(),
+          ),
+
+          // Location & Map Button
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.location_on, color: Colors.orange, size: 22),
+              ),
+              const SizedBox(width: 15),
+              const Expanded(child: Text("Pickup Location", style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF221F1E)))),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerMapPage(
+                    pickupLocation: LatLng(data['pickupLat'], data['pickupLng']),
+                    bookingId: docId,
+                  )));
+                },
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+                icon: const Icon(Icons.map, size: 16),
+                label: const Text("MAP"),
+              )
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Action Button
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () => _acceptRide(context, docId, ownerId, data),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF221F1E),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text("ACCEPT RIDE", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  // --- LOGIC: ACCEPT RIDE ---
-  // 1. Update the function to accept the 'data' map
   Future<void> _acceptRide(BuildContext context, String docId, String ownerId, Map<String, dynamic> data) async {
     try {
-      // Update Firestore status first
-      await FirebaseFirestore.instance.collection('bookings').doc(docId).update({
+      final updateData = {
         'status': 'accepted',
         'ownerId': ownerId,
         'acceptedAt': FieldValue.serverTimestamp(),
-      });
+      };
+
+      await FirebaseFirestore.instance.collection('bookings').doc(docId).update(updateData);
+
+      data.addAll(updateData);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Ride Accepted!"), backgroundColor: Colors.green),
         );
 
-        // 2. NAVIGATE TO ACTIVE RIDE PAGE IMMEDIATELY
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -385,10 +282,13 @@ class OwnerHomeContent extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to accept ride: ${e.toString()}"), backgroundColor: Colors.red),
+        );
       }
     }
   }
+
   Widget _buildNoRequests() {
     return Center(
       child: Column(
@@ -396,11 +296,10 @@ class OwnerHomeContent extends StatelessWidget {
         children: [
           Icon(Icons.notifications_off_outlined, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text("Searching for nearby riders...", style: TextStyle(fontSize: 18, color: Colors.grey)),
+          const Text("Searching for nearby Customers...", style: TextStyle(fontSize: 18, color: Colors.grey)),
         ],
       ),
     );
   }
 }
 
-*/

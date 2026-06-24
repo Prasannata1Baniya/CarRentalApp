@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:latlong2/latlong.dart';
 
 class OwnerMapPage extends StatelessWidget {
@@ -69,10 +70,43 @@ class OwnerMapPage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  /*const Text(
                     "Passenger is waiting here",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),*/
+
+                  // ... inside the Column ...
+                  PickupAddressWidget(
+                    lat: pickupLocation.latitude,
+                    lng: pickupLocation.longitude,
                   ),
+
+                  /*FutureBuilder<List<Placemark>>(
+                    future: placemarkFromCoordinates(
+                        pickupLocation.latitude,
+                        pickupLocation.longitude
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Text("Loading address...");
+                      }
+
+                      if (snapshot.hasError) {
+                        return const Text("Location lookup failed.");
+                      }
+
+                      if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                        final place = snapshot.data![0];
+                        return Text(
+                          "${place.street ?? ''}, ${place.locality ?? ''}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        );
+                      }
+
+                      return const Text("Passenger is waiting here");
+                    },
+                  ),*/
                   const SizedBox(height: 10),
                   const Text(
                     "Navigate to this location to pick up your passenger.",
@@ -124,5 +158,52 @@ class OwnerMapPage extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
       }
     }
+  }
+}
+
+// 1. UPDATED WIDGET
+class PickupAddressWidget extends StatefulWidget {
+  final double lat;
+  final double lng;
+  const PickupAddressWidget({super.key, required this.lat, required this.lng});
+
+  @override
+  State<PickupAddressWidget> createState() => _PickupAddressWidgetState();
+}
+
+class _PickupAddressWidgetState extends State<PickupAddressWidget> {
+  String? address; // Changed to nullable to track loading state
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAddress();
+  }
+
+  Future<void> _fetchAddress() async {
+    if (widget.lat == 0.0 && widget.lng == 0.0) {
+      if (mounted) setState(() => address = "Location not set");
+      return;
+    }
+
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(widget.lat, widget.lng);
+
+      if (mounted && placemarks.isNotEmpty) {
+        final p = placemarks[0];
+        setState(() => address = "${p.street ?? ''}, ${p.locality ?? ''}".replaceAll(RegExp(r'^,\s*'), ''));
+      }
+    } catch (e) {
+      if (mounted) setState(() => address = "Address unavailable");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      address ?? "Loading address...",
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    );
   }
 }

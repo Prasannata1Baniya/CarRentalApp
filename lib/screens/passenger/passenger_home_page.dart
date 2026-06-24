@@ -1,6 +1,4 @@
 import 'dart:convert';
-
-import 'package:carrentalapp/auth/auth_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -9,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:carrentalapp/data/model/car_model.dart';
 import 'package:carrentalapp/widgets/car_card.dart';
-import 'package:provider/provider.dart';
 
 class PassengerHomeContent extends StatefulWidget {
   const PassengerHomeContent({super.key});
@@ -21,74 +18,45 @@ class PassengerHomeContent extends StatefulWidget {
 class _PassengerHomeContentState extends State<PassengerHomeContent> {
   LatLng _currentCenter = const LatLng(27.7172, 85.3240);
   final MapController _mapController = MapController();
+  bool _isLoadingLocation = false;
 
-  //  1. HARDCODED FALLBACK DATA
+  static const Color kPrimaryDark = Color(0xFF221F1E);
+  static const Color kAccentGold = Color(0xFFFFA24D);
+  static const Color kBgLight = Color(0xFFF5F5F7);
+
   final List<CarModel> carList = [
-    CarModel(model: "Fortuner GR",
-        distance: 870, pricePerHour: 45, fuelCapacity: 50,
-        image: "assets/images/car1.jpg",ownerId: ''),
-    CarModel(model: "Land Cruiser", distance: 500, pricePerHour: 60,
-        fuelCapacity: 80, image: "assets/images/car2.jpg", ownerId: ''),
-    CarModel(model: "Tesla Model X", distance: 400, pricePerHour: 55,
-        fuelCapacity: 100, image: "assets/images/car3.jpg", ownerId: ''),
-    CarModel(model: "Hyundai Tucson", distance: 600, pricePerHour: 35,
-        fuelCapacity: 55, image: "assets/images/car4.jpg", ownerId: ''),
-    CarModel(model: "Kia Sportage", distance: 700, pricePerHour: 38,
-        fuelCapacity: 60, image: "assets/images/car2.jpg", ownerId: ''),
-    CarModel(model: "Suzuki Vitara", distance: 900, pricePerHour: 30,
-        fuelCapacity: 45, image: "assets/images/car3.jpg", ownerId: ''),
+    CarModel(model: "Fortuner GR", pricePerDay: 1000, fuelCapacity: 50, image: "assets/images/car1.jpg", ownerId: ''),
+    CarModel(model: "Land Cruiser", pricePerDay: 1000, fuelCapacity: 80, image: "assets/images/car2.jpg", ownerId: ''),
+    CarModel(model: "Tesla Model X", pricePerDay: 1000, fuelCapacity: 100, image: "assets/images/car3.jpg", ownerId: ''),
+    CarModel(model: "Hyundai Tucson", pricePerDay: 1000, fuelCapacity: 55, image: "assets/images/car4.jpg", ownerId: ''),
+    CarModel(model: "Kia Sportage", pricePerDay: 1000, fuelCapacity: 60, image: "assets/images/car2.jpg", ownerId: ''),
+    CarModel(model: "Suzuki Vitara", pricePerDay: 1000, fuelCapacity: 45, image: "assets/images/car3.jpg", ownerId: ''),
   ];
 
-  String _address = "Fetching address...";
-
+  String _address = "Locating your premium pickup point...";
 
   Future<Position?> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return null;
 
-    // 1. Check if location services are enabled
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if(mounted) {
-      if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location services are disabled. Please enable them.'))
-      );
-      return null;
-    }
-    }
-
-    // 2. Check and request permissions
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+
       permission = await Geolocator.requestPermission();
-      if (mounted && permission == LocationPermission.denied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permissions are denied.'))
-      );
-      return null;
-      }
+      if (permission == LocationPermission.denied) return null;
     }
+    if (permission == LocationPermission.deniedForever) return null;
 
-    if(mounted) {
-      if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permissions are permanently denied.'))
-      );
-      return null;
-    }
-    }
-
-    // 3. Get the current position
     try {
+      setState(() => _isLoadingLocation = true);
       return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
     } catch (e) {
       debugPrint("Error getting location: $e");
       return null;
+    } finally {
+      if (mounted) setState(() => _isLoadingLocation = false);
     }
   }
 
@@ -99,14 +67,13 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
       );
 
       final response = await http.get(url, headers: {
-        'User-Agent': 'com.prasannata.carrentalapp' ,// Nominatim requires a User-Agent
+        'User-Agent': 'com.prasannata.carrentalapp',
         'Accept': 'application/json',
       });
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final address = data['address'];
-
 
         String city = address['city'] ?? address['town'] ?? address['village'] ?? '';
         String road = address['road'] ?? address['suburb'] ?? '';
@@ -126,123 +93,19 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
     }
   }
 
- /* Future<void> _updateAddress(LatLng position) async {
-    try {
-      final url = Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.latitude}&lon=${position.longitude}'
-      );
-
-      final response = await http.get(url, headers: {
-        'User-Agent': 'carrentalapp_app'
-      });
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _address = data['display_name'] ?? "Location found";
-        });
-      }
-    } catch (e) {
-      debugPrint("Geocoding error: $e");
-      setState(() {
-        _address = "${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)}";
-      });
-    }
-  }*/
-
-  /*Future<void> _updateAddress(LatLng position) async {
-    try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        final place = placemarks.first;
-
-        final name = place.name ?? '';
-        final street = place.street ?? '';
-        final locality = place.locality ?? '';
-        final subLocality = place.subLocality ?? '';
-        final country = place.country ?? '';
-
-        setState(() {
-          _address = [name, street, subLocality, locality, country]
-              .where((e) => e.isNotEmpty)
-              .join(', ');
-        });
-      } else {
-        setState(() => _address = "No address found");
-      }
-    } catch (e) {
-      debugPrint("Geocoding error: $e");
-      setState(() => _address = "Unknown Location");
-    }
-  }*/
-
-  void _handleLogout(BuildContext context, AuthProviderMethod auth) {
-    showDialog(
-      context: context,
-      builder: (context) =>
-          AlertDialog(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)),
-            backgroundColor: Colors.white,
-            title: const Column(
-              children: [
-                Icon(Icons.logout_rounded, color: Colors.redAccent, size: 40),
-                SizedBox(height: 10),
-                Text("Sign Out", style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 22)),
-              ],
-            ),
-            content: const Text(
-              "Are you sure you want to log out of Sajilo Ride?",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54),
-            ),
-            actionsAlignment: MainAxisAlignment.spaceEvenly,
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("CANCEL", style: TextStyle(
-                    color: Colors.grey, fontWeight: FontWeight.bold)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 25, vertical: 12),
-                ),
-                onPressed: () async {
-                  await auth.signOut();
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text(
-                    "LOGOUT", style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-    );
-  }
-
   Future<void> _initLocation() async {
     Position? position = await _getCurrentLocation();
     if (position != null && mounted) {
       LatLng newPoint = LatLng(position.latitude, position.longitude);
-      _mapController.move(newPoint, 14.0);
+      _mapController.move(newPoint, 14.5);
       setState(() {
         _currentCenter = newPoint;
         _address = "Current Location";
       });
+      _updateAddress(newPoint);
     }
   }
+
   @override
   void initState() {
     super.initState();
@@ -251,70 +114,68 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
 
   @override
   Widget build(BuildContext context) {
-    bool isWideScreen = MediaQuery.of(context).size.width > 900;
-    final authProvider = Provider.of<AuthProviderMethod>(context);
+    bool isWideScreen = MediaQuery.of(context).size.width > 950;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Car Rental App - Choose Pickup"),
-        backgroundColor: Colors.orangeAccent,
-        foregroundColor: Colors.white,
-        elevation: 1,
-        actions: [
-          IconButton(
-            onPressed: () async{
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Logout"),
-                  content: const Text("Are you sure you want to exit?"),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-                    TextButton(
-                      onPressed: () => _handleLogout(context, authProvider),
-                      child: const Text("Logout", style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              );
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
+      backgroundColor: kBgLight,
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('Owner').snapshots(),
+        stream: FirebaseFirestore.instance.collection('owners').snapshots(),
         builder: (context, snapshot) {
-          // While loading, show the hardcoded list so it's not blank
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return isWideScreen ? _buildWebView(carList) : _buildMobileView(carList);
+            return const Center(child: CircularProgressIndicator(color: kAccentGold));
           }
 
-          // 2. FETCH LIVE DATA
           List<CarModel> liveCarList = [];
-          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+
+          if (snapshot.hasData) {
             liveCarList = snapshot.data!.docs.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
               return CarModel(
                 ownerId: doc.id,
                 model: data['carModel'] ?? 'Unknown',
-                pricePerHour: (data['pricePerHour'] ?? 0).toDouble(),
-                distance: (data['distance'] ?? 0).toDouble(),
+                pricePerDay: (data['pricePerDay'] ?? 0).toDouble(),
                 fuelCapacity: (data['fuelCapacity'] ?? 0).toDouble(),
-                //image: data['carImage'] ?? 'assets/images/placeholder.jpg',
-                image: data['carImage'] ?? 'https://via.placeholder.com/400x250.png?text=No+Image',
+                image: data['carImage'] ?? 'assets/images/car1.jpg',
               );
             }).toList();
           }
 
-          final List<CarModel> allCars = [...liveCarList, ...carList];
+          final List<CarModel> allCars = liveCarList;
 
-          return isWideScreen ? _buildWebView(allCars) : _buildMobileView(allCars);
+          return Column(
+            children: [
+              _buildPremiumHeader(),
+              Expanded(
+                child: isWideScreen ? _buildWebView(allCars) : _buildMobileView(allCars),
+              ),
+            ],
+          );
         },
       ),
     );
   }
 
+  Widget _buildPremiumHeader() {
+    return Container(
+      height: 70,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: const Row(
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("DriveX", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2, color: kPrimaryDark, fontSize: 18)),
+              Text("Your premium journey starts here", style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w400)),
+            ],
+          ),
+          Spacer(),
+          Icon(Icons.notifications_none_rounded, color: kPrimaryDark, size: 22),
+        ],
+      ),
+    );
+  }
 
   Widget _buildWebView(List<CarModel> cars) {
     return Row(
@@ -322,14 +183,18 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
         Expanded(flex: 3, child: _buildMap()),
         Expanded(
           flex: 2,
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("Available Rides", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              ),
-              Expanded(child: _buildCarGrid(2, cars)),
-            ],
+          child: Container(
+            color: kBgLight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 8),
+                  child: Text("Available Rides", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kPrimaryDark, letterSpacing: -0.5)),
+                ),
+                Expanded(child: _buildCarGrid(2, cars, true)),
+              ],
+            ),
           ),
         ),
       ],
@@ -339,17 +204,21 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
   Widget _buildMobileView(List<CarModel> cars) {
     return Column(
       children: [
-        SizedBox(height: MediaQuery.of(context).size.height * 0.4, child: _buildMap()),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
-          child: Text("Select a Car", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        ),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.45, child: _buildMap()),
         Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onVerticalDragStart: (_) {},
-            child: _buildCarGrid(2, cars)
-        ),
+          child: Container(
+            color: kBgLight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
+                  child: Text("Select a Ride", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kPrimaryDark)),
+                ),
+                Expanded(child: _buildCarGrid(1, cars, false)),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -362,57 +231,75 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
           mapController: _mapController,
           options: MapOptions(
             initialCenter: _currentCenter,
-            initialZoom: 14.0,
+            initialZoom: 14.5,
             onPositionChanged: (pos, hasGesture) {
-              if (hasGesture) {
-                setState(() {
-                  _currentCenter = pos.center;
-                  _address = "Updating";
-                });
+              if (hasGesture && pos.center != null) {
+                setState(() => _currentCenter = pos.center);
               }
             },
-            //  Update address ONLY when user stops moving map
             onMapEvent: (event) {
               if (event is MapEventMoveEnd) {
-                // 1. Extract the center from the event
-                // In newer flutter_map versions, it's event.camera.center
-                final centerPos = event.camera.center;
-
-                // 2. Call the geocoding function
-                _updateAddress(centerPos);
-
-                // 3. Optional: Set a temporary state so the user knows it's loading
-                setState(() => _address = "Locating...");
+                _updateAddress(event.camera.center);
               }
             },
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              subdomains: const ['a', 'b', 'c', 'd'],
               userAgentPackageName: 'com.prasannata.carrentalapp',
             ),
           ],
         ),
-        const Center(
+        Center(
           child: Padding(
-            padding: EdgeInsets.only(bottom: 35),
-            child: Icon(Icons.location_on, color: Colors.red, size: 45),
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(color: kPrimaryDark, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 12, spreadRadius: 2)]),
+                  child: const Icon(Icons.directions_car_filled_rounded, color: kAccentGold, size: 20),
+                ),
+                Container(width: 2, height: 10, color: kPrimaryDark),
+              ],
+            ),
           ),
         ),
         Positioned(
-          top: 10, left: 10, right: 10,
+          top: 20,
+          left: 16, right: 16,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+              boxShadow: [BoxShadow(color: kPrimaryDark.withValues(alpha: 0.06), blurRadius: 24, offset: const Offset(0, 8))],
             ),
             child: Row(
               children: [
-                const Icon(Icons.location_on, color: Colors.orange),
-                const SizedBox(width: 10),
-                Expanded(child: Text(_address, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                const Icon(Icons.radio_button_checked_rounded, color: kAccentGold, size: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("PICKUP LOCATION", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.0)),
+                      const SizedBox(height: 2),
+                      Text(_address, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kPrimaryDark), overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                if (_isLoadingLocation)
+                  const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: kPrimaryDark))
+                else
+                  IconButton(
+                    icon: const Icon(Icons.my_location_rounded, color: kPrimaryDark, size: 18),
+                    onPressed: _initLocation,
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                  )
               ],
             ),
           ),
@@ -421,23 +308,21 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
     );
   }
 
-  Widget _buildCarGrid(int crossAxisCount, List<CarModel> cars) {
-    bool isDesktop = MediaQuery.of(context).size.width > 600;
+  Widget _buildCarGrid(int crossAxisCount, List<CarModel> cars, bool isDesktop) {
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      physics: const AlwaysScrollableScrollPhysics(),
-      primary: true,
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      clipBehavior: Clip.none,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        childAspectRatio: isDesktop ? 0.75 : 0.6,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
+        childAspectRatio: isDesktop ? 0.84 : 1.35,
+        mainAxisSpacing: 24,
+        crossAxisSpacing: 24,
       ),
       itemCount: cars.length,
       itemBuilder: (context, index) {
-        return CarCard(car: cars[index], pickupLocation: _currentCenter);
+        return CarCard(car: cars[index], pickupLocation: _currentCenter, pickupAddress: _address,);
       },
     );
   }
 }
-

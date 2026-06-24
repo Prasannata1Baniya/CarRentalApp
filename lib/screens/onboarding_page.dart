@@ -61,11 +61,11 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     final bool isDesktop = width > 650;
 
     final List<CarModel> previewCars = [
-      CarModel(model: "Fortuner GR", distance: 870, pricePerHour: 45,
+      CarModel(model: "Fortuner GR", pricePerDay: 45,
           fuelCapacity: 50, image: "assets/images/car1.jpg", ownerId: '1'),
-      CarModel(model: "Tesla Model X", distance: 400, pricePerHour: 55,
+      CarModel(model: "Tesla Model X", pricePerDay: 55,
           fuelCapacity: 100, image: "assets/images/car3.jpg", ownerId: '2'),
-      CarModel(model: "Land Cruiser", distance: 500, pricePerHour: 60,
+      CarModel(model: "Land Cruiser",pricePerDay: 60,
           fuelCapacity: 80, image: "assets/images/car2.jpg", ownerId: '3'),
     ];
 
@@ -150,10 +150,10 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
                   child: Column(
                     children: [
-                      const Text("Explore Our Fleet", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,
-                          color: Colors.white)),
-                      const Text("Login to book these premium vehicles", style: TextStyle(color: Colors.white70)),
-                      const SizedBox(height: 40),
+                      //const Text("Explore Our Fleet", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,
+                        //  color: Colors.white)),
+                      //const Text("Login to book these premium vehicles", style: TextStyle(color: Colors.white70)),
+                      //const SizedBox(height: 40),
         
                       // Grid of cars
                       GridView.builder(
@@ -170,7 +170,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                           return AbsorbPointer(
                             child: CarCard(car: previewCars[index],
                                 pickupLocation: const LatLng(27.7, 85.3),
-                              buttonColor: Colors.black,),
+                              buttonColor: Colors.black, pickupAddress: '',),
                           );
                         },
                       ),
@@ -187,15 +187,15 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                 padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
                 child: Column(
                   children: [
-                    const Text("SAJILO YATRA", style: AppTextStyles.headingWhiteLogo),
+                    const Text("DriveX", style: AppTextStyles.headingWhiteLogo),
                     const SizedBox(height: 30),
                     _buildContactItem(Icons.phone, "+977 9806800001"),
-                    _buildContactItem(Icons.email, "support@sajiloride.com"),
+                    _buildContactItem(Icons.email, "support@DriveX.com"),
                     _buildContactItem(Icons.location_on, "Kathmandu, Nepal"),
                     const SizedBox(height: 30),
                     const Divider(color: Colors.white24),
                     const SizedBox(height: 20),
-                    const Text("© 2025 Sajilo Ride. All rights reserved.", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const Text("© 2025 DriveX. All rights reserved.", style: TextStyle(color: Colors.grey, fontSize: 12)),
                   ],
                 ),
               ),
@@ -212,7 +212,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const Flexible(
-          child: Text('SAJILO YATRA', style: AppTextStyles.headingWhiteLogo),
+          child: Text('', style: AppTextStyles.headingWhiteLogo),
         ),
 
         // DESKTOP MENU
