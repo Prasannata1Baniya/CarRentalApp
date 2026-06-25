@@ -164,100 +164,105 @@ class _CarManagementContentState extends State<CarManagementContent> {
             title: const Text("Manage Vehicle", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             backgroundColor: Colors.orange,
             elevation: 0,
+            foregroundColor: Colors.white,
             actions: [
               if (!_isEditing)
                 IconButton(
-                  icon: const Icon(Icons.edit, color: Color(0xFFFF5500)),
+                  icon: const Icon(Icons.edit, color: Colors.white),
                   onPressed: () => setState(() => _isEditing = true),
                 ),
             ],
           ),
-          body: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF5500)))
-              : SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _buildImageSelector(),
-                  const SizedBox(height: 24),
-
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 8)),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Vehicle Information",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF112233)),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF5500)))
+                  : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildImageSelector(),
+                      const SizedBox(height: 24),
+              
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 8)),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-
-                        // Added practical layout examples here
-                        _buildDecoratedField(_modelController, "Car Model", "Tesla Model 3", Icons.directions_car_outlined),
-                        _buildDecoratedField(_plateController, "License Plate", "BA 1 CHA 1234", Icons.badge_outlined),
-                        _buildDecoratedField(_colorController, "Car Color", "Metallic Black", Icons.palette_outlined),
-                        _buildDecoratedField(_priceController, "Price per Day (Rs)", "1000", Icons.payments_outlined, isNumeric: true),
-                        _buildDecoratedField(_fuelCapacityController, "Fuel Capacity (L)", "55", Icons.local_gas_station_outlined, isNumeric: true),
-
-                        const SizedBox(height: 12),
-
-                        const Text("Fuel Type", style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          initialValue: _fuelType,
-                          dropdownColor: Colors.white,
-                          style: const TextStyle(color: Color(0xFF112233)),
-                          decoration: inputDecorate.buildInputDecoration("Fuel Type", prefixIcon: const Icon(Icons.ev_station_outlined, size: 20)),
-                          items: ['Petrol', 'Diesel', 'Electric', 'Hybrid'].map((type) {
-                            return DropdownMenuItem(value: type, child: Text(type));
-                          }).toList(),
-                          onChanged: _isEditing ? (value) => setState(() => _fuelType = value!) : null,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Vehicle Information",
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF112233)),
+                            ),
+                            const SizedBox(height: 20),
+              
+                            _buildDecoratedField(_modelController, "Car Model", "Tesla Model 3", Icons.directions_car_outlined),
+                            _buildDecoratedField(_plateController, "License Plate", "BA 1 CHA 1234", Icons.badge_outlined),
+                            _buildDecoratedField(_colorController, "Car Color", "Metallic Black", Icons.palette_outlined),
+                            _buildDecoratedField(_priceController, "Price per Day (Rs)", "1000", Icons.payments_outlined, isNumeric: true),
+                            _buildDecoratedField(_fuelCapacityController, "Fuel Capacity (L)", "55", Icons.local_gas_station_outlined, isNumeric: true),
+              
+                            const SizedBox(height: 12),
+              
+                            const Text("Fuel Type", style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<String>(
+                              initialValue: _fuelType,
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(color: Color(0xFF112233)),
+                              decoration: inputDecorate.buildInputDecoration("Fuel Type", prefixIcon: const Icon(Icons.ev_station_outlined, size: 20)),
+                              items: ['Petrol', 'Diesel', 'Electric', 'Hybrid'].map((type) {
+                                return DropdownMenuItem(value: type, child: Text(type));
+                              }).toList(),
+                              onChanged: _isEditing ? (value) => setState(() => _fuelType = value!) : null,
+                            ),
+              
+                            const SizedBox(height: 30),
+              
+                            if (_isEditing)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: Colors.grey),
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => setState(() => _isEditing = false),
+                                      child: const Text("CANCEL", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFFF5500),
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => _saveCarDetails(ownerId),
+                                      child: const Text("SAVE CHANGES", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
                         ),
-
-                        const SizedBox(height: 30),
-
-                        if (_isEditing)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.grey),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                  onPressed: () => setState(() => _isEditing = false),
-                                  child: const Text("CANCEL", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFF5500),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                  onPressed: () => _saveCarDetails(ownerId),
-                                  child: const Text("SAVE CHANGES", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -308,6 +313,7 @@ class _CarManagementContentState extends State<CarManagementContent> {
       child: TextFormField(
         controller: controller,
         enabled: _isEditing,
+
         keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
         style: const TextStyle(color: Color(0xFF112233)),
         decoration: inputDecorate.buildInputDecoration(

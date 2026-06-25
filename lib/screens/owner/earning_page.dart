@@ -144,7 +144,7 @@ class OwnerEarningContent extends StatelessWidget {
           SizedBox(height: 16),
           Text("No earnings yet", style: TextStyle(color: kPrimaryDark, fontWeight: FontWeight.bold, fontSize: 16)),
           SizedBox(height: 4),
-          Text("Your completed trip revenue will show up here.", style: TextStyle(color: Colors.grey, fontSize: 13)),
+          Text("Your Revenue will show up here.", style: TextStyle(color: Colors.grey, fontSize: 13)),
         ],
       ),
     );
