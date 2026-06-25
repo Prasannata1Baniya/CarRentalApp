@@ -8,10 +8,10 @@ import 'package:esewa_flutter_sdk/esewa_flutter_sdk.dart';
 import 'package:esewa_flutter_sdk/esewa_config.dart';
 import 'package:esewa_flutter_sdk/esewa_payment.dart';
 import 'package:esewa_flutter_sdk/esewa_payment_success_result.dart';
-import 'package:carrentalapp/data/model/car_model.dart';
-import 'package:carrentalapp/screens/passenger/booking_confirm.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../auth/auth_provider.dart';
+import '../../data/model/car_model.dart';
+import 'booking_confirm.dart';
 
 class CarDetailPage extends StatefulWidget {
   final CarModel car;
@@ -49,23 +49,29 @@ class _CarDetailPageState extends State<CarDetailPage> {
     }
   }
 
-  // In your _CarDetailPageState
   String? ownerPhoneNumber;
 
   @override
   void initState() {
     super.initState();
     _fetchOwnerPhone();
+    debugPrint("DETAIL PAGE RECEIVED: Color=${widget.car.color}, Plate=${widget.car.carNumber},"
+        "Fuel=${widget.car.fuelCapacity}"
+    );
+    debugPrint(widget.car.toString());
   }
 
   Future<void> _fetchOwnerPhone() async {
     try {
-      // Assuming 'ownerId' in car document corresponds to the user UID
+      debugPrint("Fetching phone for ownerId: ${widget.car.ownerId}");
       final doc = await FirebaseFirestore.instance.collection('users').doc(widget.car.ownerId).get();
       if (doc.exists) {
+        debugPrint("Phone data found: ${doc.data()?['phone']}"); // Check this log
         setState(() {
           ownerPhoneNumber = doc.data()?['phone'] ?? 'No Phone';
         });
+      } else {
+        debugPrint("User document does not exist for this ownerId");
       }
     } catch (e) {
       debugPrint("Error fetching phone: $e");
@@ -164,12 +170,19 @@ class _CarDetailPageState extends State<CarDetailPage> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
-
+    debugPrint("--- DETAILED INSPECTION ---");
+    debugPrint("Model: ${widget.car.model}");
+    debugPrint("Color: '${widget.car.color}'");
+    debugPrint("Plate: '${widget.car.carNumber}'");
+    debugPrint("---------------------------");
+    debugPrint("UI IS SEEING: ${widget.car.color}");
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
         title: Text(widget.car.model, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: Colors.orange,
+        //backgroundColor: Colors.orange,
+        //backgroundColor: Color(0xFF221F1E),
+        backgroundColor: Color(0xFFFF8C42),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -222,14 +235,14 @@ class _CarDetailPageState extends State<CarDetailPage> {
           crossAxisSpacing: 10,
           childAspectRatio: 7,
           children: [
-            _buildSpecTile(Icons.palette_rounded, "Color", widget.car.color),
-            _buildSpecTile(Icons.local_gas_station_rounded, "Fuel", widget.car.fuelType),
-            _buildSpecTile(Icons.numbers_rounded, "Plate No.", widget.car.carNumber),
+            _buildSpecTile(Icons.palette_rounded, "Color",widget.car.color),
+            _buildSpecTile(Icons.local_gas_station_rounded, "Fuel",widget.car.fuelType),
+            _buildSpecTile(Icons.numbers_rounded, "Plate No.",widget.car.carNumber),
             _buildSpecTile(
               Icons.phone_rounded,
               "Contact",
-              widget.car.ownerPhone,
-              onTap: () => _makePhoneCall(widget.car.ownerPhone),
+              ownerPhoneNumber ?? widget.car.ownerPhone,
+              onTap: () => _makePhoneCall(ownerPhoneNumber ?? widget.car.ownerPhone),
             ),
           ],
         ),
@@ -485,8 +498,10 @@ class _CarDetailPageState extends State<CarDetailPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold,color: Colors.black)),
+                Text(label, style: const TextStyle(fontSize: 10,
+                    color: Colors.grey, fontWeight: FontWeight.bold)),
+                Text(value, style: const TextStyle(fontSize: 13,
+                    fontWeight: FontWeight.bold,color: Color(0xFF221F1E))),
               ],
             ),
           ],

@@ -102,7 +102,7 @@ class _AppShellState extends State<AppShell> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.04), // Modern optimized syntax
+                      color: Colors.white.withValues(alpha: 0.04),
                       shape: BoxShape.circle,
                     ),
                     child: Image.asset(

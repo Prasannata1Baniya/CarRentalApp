@@ -135,15 +135,7 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
 
           if (snapshot.hasData) {
             liveCarList = snapshot.data!.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return CarModel(
-                ownerId: doc.id,
-                model: data['carModel'] ?? 'Unknown',
-                pricePerDay: (data['pricePerDay'] ?? 0).toDouble(),
-                fuelCapacity: (data['fuelCapacity'] ?? 0).toDouble(),
-                image: data['carImage'] ?? 'assets/images/car1.jpg',
-                fuelType: '', color: '', carNumber: '', ownerPhone: '',
-              );
+              return CarModel.fromFirestore(doc);
             }).toList();
           }
 

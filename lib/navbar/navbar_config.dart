@@ -20,7 +20,7 @@ class NavItem {
 
 const List<NavItem> passengerDestinations = [
   NavItem(label: 'Home', icon: Icons.home, screen: PassengerHomeContent()),
-  NavItem(label: "Booking", icon: Icons.calendar_month_rounded, screen: RentCarPage()),
+  NavItem(label: "Rentals", icon: Icons.calendar_month_rounded, screen: RentCarPage()),
   NavItem(label: 'History', icon: Icons.history_outlined, screen: HistoryPage()),
   NavItem(label: 'Profile', icon: Icons.person_outline, screen: PassengerProfileContent()),
 ];

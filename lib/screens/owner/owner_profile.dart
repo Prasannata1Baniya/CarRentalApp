@@ -21,7 +21,7 @@ class OwnerProfileContent extends StatelessWidget {
       backgroundColor: kBgSurface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 24.0),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),

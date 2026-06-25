@@ -55,7 +55,7 @@ class _RegisterPageState extends State<RegisterPage> {
       _nameController.text.trim(),
       _emailController.text.trim(),
       _passwordController.text.trim(),
-      _numController.text,
+      _phoneNumber.isEmpty ? _numController.text : _phoneNumber,
       selectedRole!,
     );
 
@@ -94,7 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 25,
                     offset: const Offset(0, 10),
                   )

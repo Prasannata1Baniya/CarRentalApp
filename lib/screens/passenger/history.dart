@@ -21,7 +21,7 @@ class HistoryPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: kBgLight,
       appBar: AppBar(
-        title: const Text("Booking History", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text("Rent History", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: kPrimaryDark,
         elevation: 0,
         foregroundColor: Colors.white,

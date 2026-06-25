@@ -105,13 +105,12 @@ class RentCarPage extends StatelessWidget {
                         physics: const BouncingScrollPhysics(),
                           itemBuilder: (context, index) {
                             DocumentSnapshot doc = cars[index];
-                            var carData = doc.data() as Map<String, dynamic>;
-
-                            // Inside itemBuilder:
                             debugPrint("RAW DATA: ${doc.data()}");
                             CarModel currentCar = CarModel.fromFirestore(doc);
+                            debugPrint("Sending data to CarDetail Page: ${currentCar.color}");
 
-                           /* CarModel currentCar = CarModel(
+                           /*var carData = doc.data() as Map<String, dynamic>;
+                            CarModel currentCar = CarModel(
                               model: carData['carModel'] ?? 'Unknown',
                               pricePerDay: (carData['pricePerDay'] as num?)?.toDouble() ?? 0.0,
                               fuelCapacity: (carData['fuelCapacity'] as num?)?.toDouble() ?? 0.0,
