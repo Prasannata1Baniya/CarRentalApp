@@ -19,7 +19,7 @@ class OwnerHomeContent extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("New Ride Requests"),
+        title: const Text("New Rent Requests"),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
