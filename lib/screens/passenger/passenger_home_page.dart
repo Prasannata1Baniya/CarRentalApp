@@ -124,32 +124,34 @@ class _PassengerHomeContentState extends State<PassengerHomeContent> {
 
     return Scaffold(
       backgroundColor: kBgLight,
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('owners').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: kAccentGold));
-          }
-
-          List<CarModel> liveCarList = [];
-
-          if (snapshot.hasData) {
-            liveCarList = snapshot.data!.docs.map((doc) {
-              return CarModel.fromFirestore(doc);
-            }).toList();
-          }
-
-          final List<CarModel> allCars = liveCarList;
-
-          return Column(
-            children: [
-              _buildPremiumHeader(),
-              Expanded(
-                child: isWideScreen ? _buildWebView(allCars) : _buildMobileView(allCars),
-              ),
-            ],
-          );
-        },
+      body: SafeArea(
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('owners').snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: kAccentGold));
+            }
+        
+            List<CarModel> liveCarList = [];
+        
+            if (snapshot.hasData) {
+              liveCarList = snapshot.data!.docs.map((doc) {
+                return CarModel.fromFirestore(doc);
+              }).toList();
+            }
+        
+            final List<CarModel> allCars = liveCarList;
+        
+            return Column(
+              children: [
+                _buildPremiumHeader(),
+                Expanded(
+                  child: isWideScreen ? _buildWebView(allCars) : _buildMobileView(allCars),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

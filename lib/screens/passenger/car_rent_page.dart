@@ -12,145 +12,127 @@ class RentCarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: kPrimaryDark,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                offset: Offset(0, 5),
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: kPrimaryDark,
+        title:  const Text(
+          "Available Cars",
+          style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              letterSpacing: -0.2
           ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
             child: Container(
-              height: 70,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              alignment: Alignment.centerLeft,
-              child: const Text(
-                "Available Cars",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18, // Clean header size
-                    letterSpacing: -0.2
+              color: const Color(0xFFF8F9FA),
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('owners')
+                      .where('isAvailable', isEqualTo: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: Colors.orangeAccent),
+                      );
+                    }
+      
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          "No cars available right now",
+                          style: TextStyle(color: Colors.black54, fontSize: 16),
+                        ),
+                      );
+                    }
+      
+                    final cars = snapshot.data!.docs;
+      
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        double gridWidth = constraints.maxWidth;
+      
+                        int crossAxisCount;
+                        double childAspectRatio;
+      
+                        if (gridWidth < 600) {
+                          crossAxisCount = 2;
+                          childAspectRatio = 0.75;
+                        } else if (gridWidth < 1000) {
+                          crossAxisCount = 3;
+                          childAspectRatio = 1.0;
+                        } else {
+                          crossAxisCount = 4;
+                          childAspectRatio = 1.15;
+                        }
+      
+                        return GridView.builder(
+                          padding: const EdgeInsets.all(24),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            childAspectRatio: childAspectRatio,
+                            crossAxisSpacing: 24,
+                            mainAxisSpacing: 24,
+                          ),
+                          itemCount: cars.length,
+                          physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              DocumentSnapshot doc = cars[index];
+                              debugPrint("RAW DATA: ${doc.data()}");
+                              CarModel currentCar = CarModel.fromFirestore(doc);
+                              debugPrint("Sending data to CarDetail Page: ${currentCar.color}");
+      
+                             /*var carData = doc.data() as Map<String, dynamic>;
+                              CarModel currentCar = CarModel(
+                                model: carData['carModel'] ?? 'Unknown',
+                                pricePerDay: (carData['pricePerDay'] as num?)?.toDouble() ?? 0.0,
+                                fuelCapacity: (carData['fuelCapacity'] as num?)?.toDouble() ?? 0.0,
+                                image: carData['carImage'] ?? '',
+                                ownerId: doc.id,
+                                fuelType: carData['fuelType'] ?? 'N/A',
+                                color: carData['carColor'] ?? 'N/A',
+                                carNumber: carData['plateNumber'] ?? 'N/A',
+                                ownerPhone: carData['ownerPhone'] ?? 'N/A',
+                              );*/
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CarDetailPage(
+                                        car: currentCar,
+                                        pickupLocation: const LatLng(27.7172, 85.3240),
+                                        pickupAddress: "Kathmandu, Nepal",
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _buildCarCard(
+                                  model: currentCar.model,
+                                  price: currentCar.pricePerDay.toString(),
+                                  imageUrl: currentCar.image,
+                                  fuelType: currentCar.fuelType,
+                                ),
+                              );
+                            }
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ),
           ),
-        ),
-
-        Expanded(
-          child: Container(
-            color: const Color(0xFFF8F9FA),
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('owners')
-                    .where('isAvailable', isEqualTo: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.orangeAccent),
-                    );
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        "No cars available right now",
-                        style: TextStyle(color: Colors.black54, fontSize: 16),
-                      ),
-                    );
-                  }
-
-                  final cars = snapshot.data!.docs;
-
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      double gridWidth = constraints.maxWidth;
-
-                      int crossAxisCount;
-                      double childAspectRatio;
-
-                      if (gridWidth < 600) {
-                        crossAxisCount = 2;
-                        childAspectRatio = 0.75;
-                      } else if (gridWidth < 1000) {
-                        crossAxisCount = 3;
-                        childAspectRatio = 1.0;
-                      } else {
-                        crossAxisCount = 4;
-                        childAspectRatio = 1.15;
-                      }
-
-                      return GridView.builder(
-                        padding: const EdgeInsets.all(24),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: childAspectRatio,
-                          crossAxisSpacing: 24,
-                          mainAxisSpacing: 24,
-                        ),
-                        itemCount: cars.length,
-                        physics: const BouncingScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            DocumentSnapshot doc = cars[index];
-                            debugPrint("RAW DATA: ${doc.data()}");
-                            CarModel currentCar = CarModel.fromFirestore(doc);
-                            debugPrint("Sending data to CarDetail Page: ${currentCar.color}");
-
-                           /*var carData = doc.data() as Map<String, dynamic>;
-                            CarModel currentCar = CarModel(
-                              model: carData['carModel'] ?? 'Unknown',
-                              pricePerDay: (carData['pricePerDay'] as num?)?.toDouble() ?? 0.0,
-                              fuelCapacity: (carData['fuelCapacity'] as num?)?.toDouble() ?? 0.0,
-                              image: carData['carImage'] ?? '',
-                              ownerId: doc.id,
-                              fuelType: carData['fuelType'] ?? 'N/A',
-                              color: carData['carColor'] ?? 'N/A',
-                              carNumber: carData['plateNumber'] ?? 'N/A',
-                              ownerPhone: carData['ownerPhone'] ?? 'N/A',
-                            );*/
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CarDetailPage(
-                                      car: currentCar,
-                                      pickupLocation: const LatLng(27.7172, 85.3240),
-                                      pickupAddress: "Kathmandu, Nepal",
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: _buildCarCard(
-                                model: currentCar.model,
-                                price: currentCar.pricePerDay.toString(),
-                                imageUrl: currentCar.image,
-                                fuelType: currentCar.fuelType,
-                              ),
-                            );
-                          }
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

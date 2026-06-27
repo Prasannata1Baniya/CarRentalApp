@@ -231,9 +231,9 @@ class _CarDetailPageState extends State<CarDetailPage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 7,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 2.8,
           children: [
             _buildSpecTile(Icons.palette_rounded, "Color",widget.car.color),
             _buildSpecTile(Icons.local_gas_station_rounded, "Fuel",widget.car.fuelType),
@@ -288,7 +288,7 @@ class _CarDetailPageState extends State<CarDetailPage> {
         ),
 
         Container(
-          height: 250,
+          height: MediaQuery.of(context).size.height * 0.25,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colors.grey.shade300),
