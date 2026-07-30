@@ -2,15 +2,17 @@
 
 A Flutter project of Cab booking System.
 
-## Getting Started
+### Login Page
+<img src="assets/screenshots/s1.png" width="250" alt="">
 
-This project is a starting point for a Flutter application.
+### Home Page
+<img src="assets/screenshots/s2.png" width="250" alt="">
 
-A few resources to get you started if this is your first Flutter project:
+### Car Detail Page
+<img src="assets/screenshots/s3.png" width="250" alt="">
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Booking Confirm
+<img src="assets/screenshots/s4.png" width="250" alt="">
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### History Page
+<img src="assets/screenshots/s5.png" width="250" alt="">
