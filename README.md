@@ -3,7 +3,7 @@
 A Flutter project of Cab booking System.
 
 ### Login Page
-<img src="assets/screenshots/s1.png" width="1080" alt="">
+<img src="assets/screenshots/s1.png" width="1613" alt="">
 
 ### Home Page
 <img src="assets/screenshots/s2.png" width="1896" alt="">
